@@ -22,7 +22,8 @@
      }
      return $result;
     });
-    if ($mem['type'] == 'assembly') {
+    $type = $mem['type'];
+    if ($type == 'assembly') {
      fseek($rom, snes2file(intval($mem['offset'])));
      $data = fread($rom, intval($mem['size']));
      $length = strlen($data) / 2;
@@ -31,6 +32,9 @@
       $arr[$i] = ord(substr($data, $i * 2, 2));
      }
      $data = $arr;
+    }
+    else if ($type == 'data') {
+     $text = implode(", ", $mem['entries']);
     }
    }
    else {
