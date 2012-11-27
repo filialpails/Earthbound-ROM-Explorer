@@ -34,7 +34,7 @@
      $data = $arr;
     }
     else if ($type == 'data') {
-     $text = implode(", ", $mem['entries']);
+     $text = print_r($mem['entries'], true);
     }
    }
    else {
@@ -42,26 +42,23 @@
      return $element['offset'] >= 0x7e0000 && $element['offset'] <= 0x7fffff;
     });
     $rommap = array_filter($memmap, function($element) {
-     return !($element['offset'] >= 0x7e0000 && $element['offset'] <= 0x7fffff);
+     return $element['offset'] < 0x7e0000 || $element['offset'] > 0x7fffff;
     });
-    $text = '<h1>ROM map</h1>';
-    $text .= '<ul>';
+    $text = '<h1>ROM map</h1><ul>';
     foreach ($rommap as $item) {
      $offset = dechex($item['offset']);
      $type = isset($item['type']) ? $item['type'] : null;
      $name = isset($item['name']) ? $item['name'] : "\$$offset";
      $description = isset($item['description']) ? $item['description'] : 'No description.';
-     $text .= "<li><a href=\"ebyaml_explore.php?address=$offset\" title=\"$description\">$name</a></li>\n";
+     $text .= "<li><a href=\"earthbound_rom_explorer.php?address=$offset\" title=\"$description\">$name</a></li>\n";
     }
-    $text .= '</ul>';
-    $text .= '<ul>';
-    $text .= '<h1>RAM map</h1>';
+    $text .= '</ul><ul><h1>RAM map</h1>';
     foreach ($rammap as $item) {
      $offset = dechex($item['offset']);
      $type = isset($item['type']) ? $item['type'] : null;
      $name = isset($item['name']) ? $item['name'] : "\$$offset";
      $description = isset($item['description']) ? $item['description'] : 'No description.';
-     $text .= "<li><a href=\"ebyaml_explore.php?address=$offset\" title=\"$description\">$name</a></li>\n";
+     $text .= "<li><a href=\"earthbound_rom_explorer.php?address=$offset\" title=\"$description\">$name</a></li>\n";
     }
     $text .= '</ul>';
    }
