@@ -20,17 +20,17 @@ class Controller {
 				require 'viewasm.php';
 			}
 			else if ($type == 'data') {
-				$maintext = print_r($desc, true);
+				$data = array_map(function($byte) { return ord($byte); }, str_split($data));
 				require 'viewdata.php';
 			}
 		}
 		else if (isset($_GET['rommap'])) {
 			$map = $this->model->getRomMap();
-			require 'viewmap.php';
+			require 'viewrommap.php';
 		}
 		else if (isset($_GET['rammap'])) {
 			$map = $this->model->getRamMap();
-			require 'viewmap.php';
+			require 'viewrammap.php';
 		}
 		else {
 			$rominfo = $this->model->getRomInfo();

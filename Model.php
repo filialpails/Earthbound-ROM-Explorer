@@ -24,21 +24,11 @@ class Model {
 	}
 	
 	public function getFromName($name) {
-		$desc = $this->map[$name];
-		$rom = fopen($this->romfile, 'rb');
-		fseek($rom, static::snes2file(intval($desc['offset'])));
-		$data = fread($rom, intval($desc['size']));
-		fclose($rom);
-		return [$desc, $data];
+		$address = dechex($this->map[$name]['offset']);
+		return $this->getFromAddress($address);
 	}
 	
 	public function getFromAddress($address) {
-		/*$desc = array_reduce($this->map, function($result, $element) use($address) {
-			if (dechex($element['offset']) == $address) {
-				$result = $element;
-			}
-			return $result;
-		});*/
 		$desc = $this->map[hexdec($address)];
 		$rom = fopen($this->romfile, 'rb');
 		fseek($rom, static::snes2file(intval($desc['offset'])));
