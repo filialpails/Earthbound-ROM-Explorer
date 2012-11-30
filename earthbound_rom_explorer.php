@@ -1,82 +1,67 @@
 <?php
-   // requires eb.yml from PKHackers/EBYAML.git, a headerless Earthbound ROM (expanded should be okay), and filialpails/65816.js.git to disassemble the ASM listings
-   $YAMLFILE = 'eb.yml';
-   $ROMFILE = 'earthbound.smc';
-   function file2snes($offset) {
-    return 0xc00000 + ($offset & 0x3fffff);
-   }
-   function snes2file($addr) {
-    return $addr & 0x3fffff;
-   }
-   $ebyaml = yaml_parse_file($YAMLFILE, -1);
-   $rom = fopen($ROMFILE, 'rb');
-   $rominfo = $ebyaml[0];
-   $memmap = $ebyaml[1];
-   $address = isset($_GET['address']) ? $_GET['address'] : null;
-   $text = '';
-   $data = null;
-   if (isset($address)) {
-    $mem = array_reduce($memmap, function($result, $element) use($address) {
-     if (dechex($element['offset']) == $address) {
-      $result = $element;
-     }
-     return $result;
-    });
-    $type = $mem['type'];
-    if ($type == 'assembly') {
-     fseek($rom, snes2file(intval($mem['offset'])));
-     $data = fread($rom, intval($mem['size']));
-     $length = strlen($data) / 2;
-     $arr = [];
-     for ($i = 0; $i < $length; ++$i) {
-      $arr[$i] = ord(substr($data, $i * 2, 2));
-     }
-     $data = $arr;
-    }
-    else if ($type == 'data') {
-     $text = print_r($mem['entries'], true);
-    }
-   }
-   else {
-    $rammap = array_filter($memmap, function($element) {
-     return $element['offset'] >= 0x7e0000 && $element['offset'] <= 0x7fffff;
-    });
-    $rommap = array_filter($memmap, function($element) {
-     return $element['offset'] < 0x7e0000 || $element['offset'] > 0x7fffff;
-    });
-    $text = '<h1>ROM map</h1><ul>';
-    foreach ($rommap as $item) {
-     $offset = dechex($item['offset']);
-     $type = isset($item['type']) ? $item['type'] : null;
-     $name = isset($item['name']) ? $item['name'] : "\$$offset";
-     $description = isset($item['description']) ? $item['description'] : 'No description.';
-     $text .= "<li><a href=\"earthbound_rom_explorer.php?address=$offset\" title=\"$description\">$name</a></li>\n";
-    }
-    $text .= '</ul><ul><h1>RAM map</h1>';
-    foreach ($rammap as $item) {
-     $offset = dechex($item['offset']);
-     $type = isset($item['type']) ? $item['type'] : null;
-     $name = isset($item['name']) ? $item['name'] : "\$$offset";
-     $description = isset($item['description']) ? $item['description'] : 'No description.';
-     $text .= "<li><a href=\"earthbound_rom_explorer.php?address=$offset\" title=\"$description\">$name</a></li>\n";
-    }
-    $text .= '</ul>';
-   }
+	require_once 'Controller.php';
+	$maintext = '';
+	$styletext = '';
+	$scripttext = '';
+	$controller = new Controller('eb.yml', 'earthbound.smc');
+	$controller->invoke();
 ?>
 <!doctype html>
 <html>
- <head>
-  <meta charset="utf-8"/>
-  <title>Earthbound ROM Explorer</title>
-  <script src="65816.js"></script>
-  <script>
-   document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("asm").textContent = _65816.disassemble(<?php echo json_encode($data); ?>);
-   });
-  </script>
- </head>
- <body>
-  <?php echo $text; ?>
-  <pre id="asm"></pre>
- </body>
+	<head>
+		<meta charset="utf-8"/>
+		<title>Earthbound ROM Explorer</title>
+		<link rel="stylesheet" href="normalize.css"/>
+		<style>
+			body {
+				text-align: center;
+				background-color: #f00;
+				color: #fff;
+			}
+				#left {
+					text-align: left;
+					position: fixed;
+					top: 0;
+					bottom: 0;
+					left: 0;
+					margin: 15px;
+				}
+					#title {
+						color: #fff;
+						font-family: sans-serif;
+						font-weight: normal;
+						text-shadow: #000 1px 1px, #000 -1px 1px, #000 -1px -1px, #000 1px -1px;
+						text-align: center;
+					}
+				#middle {
+					padding: 1em;
+					border: 5px ridge #fff;
+					border-radius: 3px;
+					margin: auto;
+					text-align: left;
+					background-color: #000;
+					overflow: auto;
+					width: 768px;
+					height: 672px;
+				}
+				<?php echo $styletext; ?>
+		</style>
+		<?php echo $scripttext; ?>
+	</head>
+	<body>
+		<div id="left">
+			<a href="earthbound_rom_explorer.php"><h1 id="title">Earthbound<br/>ROM Explorer</h1></a>
+			<nav>
+				<ul>
+					<li><a href="earthbound_rom_explorer.php?rommap">ROM map</a></li>
+					<li><a href="earthbound_rom_explorer.php?rammap">RAM map</a></li>
+					<li>Go to address: $<input type="text" size="6"/></li>
+				</ul>
+			</nav>
+		</div>
+		<div id="middle">
+			<?php echo $maintext; ?>
+		</div>
+	</body>
 </html>
+
