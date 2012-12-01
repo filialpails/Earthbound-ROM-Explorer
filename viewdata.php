@@ -1,7 +1,8 @@
 <?php
-	$maintext = '<pre>';
-	foreach ($data as $element) {
-		$maintext .= '0x'.str_pad(dechex($element), 2, '0', STR_PAD_LEFT)."\n";
+	foreach ($entries as $entry) {
+		foreach ($entry as $key => $value) {
+			$maintext .= "$key: $value<br/>";
+		}
+		$maintext .= '---<br/>';
 	}
-	$maintext .= '</pre>';
 ?>

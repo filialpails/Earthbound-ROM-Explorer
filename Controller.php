@@ -11,9 +11,7 @@ class Controller {
 	public function invoke() {
 		global $maintext, $scripttext, $styletext;
 		if (isset($_GET['name']) || isset($_GET['address'])) {
-			$datadesc = (isset($_GET['name'])) ? $this->model->getFromName($_GET['name']) : $this->model->getFromAddress($_GET['address']);
-			$desc = $datadesc[0];
-			$data = $datadesc[1];
+			list($desc, $data) = (isset($_GET['name'])) ? $this->model->getFromName($_GET['name']) : $this->model->getFromAddress($_GET['address']);
 			$type = $desc['type'];
 			if ($type == 'assembly') {
 				$asm = array_map(function($byte) { return ord($byte); }, str_split($data));
@@ -21,6 +19,24 @@ class Controller {
 			}
 			else if ($type == 'data') {
 				$data = array_map(function($byte) { return ord($byte); }, str_split($data));
+				$datasize = count($data);
+				$entriesdesc = $desc['entries'];
+				$entriescount = count($entriesdesc);
+				$entries = [];
+				for ($curByte = 0; $curByte < $datasize;) {
+					$enty = [];
+					foreach ($entriesdesc as $curEntry) {
+						$entrysize = $curEntry['size'];
+						$entryarray = array_slice($data, $curByte, $entrysize);
+						$entrydata = 0;
+						for ($i = 0; $i < $entrysize; ++$i) {
+							$entrydata += $entryarray[$i] << ($i * 8);
+						}
+						$entry[ $curEntry['name']] = $entrydata;
+						$curByte += $entrysize;
+					}
+					array_push($entries, $entry);
+				}
 				require 'viewdata.php';
 			}
 		}

@@ -1,5 +1,5 @@
 <?php
-	$styletext = 'table { border: solid 1px #fff; } table tr { vertical-align: top; }';
+	$styletext = 'tr { vertical-align: top; }';
 	function make_table($arrayname, $array) {
 		$ret = "<table id=\"$arrayname\">\n";
 		foreach ($array as $key => $value) {
