@@ -1,10 +1,8 @@
 <?php
 	require_once 'Controller.php';
-	$maintext = '';
-	$styletext = '';
-	$scripttext = '';
 	$controller = new Controller('eb.yml', 'earthbound.smc');
 	$controller->invoke();
+	$view = $controller->getView();
 ?>
 <!doctype html>
 <html>
@@ -35,6 +33,7 @@
 				color: #fff;
 				font-family: "Apple Kid", sans-serif;
 				font-size: 16px;
+				padding: 16px;
 			}
 				a:link, a:visited, a:hover {
 					color: #fff;
@@ -42,15 +41,15 @@
 				#left {
 					text-align: left;
 					position: fixed;
-					top: 0;
-					bottom: 0;
-					left: 0;
-					margin: 15px;
+					top: 16px;
+					left: 16px;
+					padding: 16px;
 				}
 					#title {
 						font-family: "The Font Against Giygas", sans-serif;
 						font-weight: normal;
 						text-align: center;
+						font-size: 44px;
 					}
 						#titlelink {
 							text-decoration: none;
@@ -65,9 +64,9 @@
 							}
 				#middle {
 					font-family: StatusPlz, monospace;
-					padding: 1em;
-					border: 5px ridge #fff;
-					border-radius: 3px;
+					padding: 16px;
+					border: 16px ridge #fff;
+					border-radius: 16px;
 					margin: auto;
 					text-align: left;
 					background-color: #000;
@@ -75,22 +74,23 @@
 					width: 768px;
 					height: 672px;
 				}
-				<?php echo $styletext; ?>
+			<?php echo $view->getStyle(); ?>
 		</style>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 		<script>
-			document.addEventListener('DOMContentLoaded', function() {
-				document.getElementById('btn').addEventListener('click', function() {
-					location.href = 'earthbound_rom_explorer.php?address=' + document.getElementById('addr').value;
+			$(document).ready( function() {
+				$('#btn').click(function() {
+					location.href = 'earthbound_rom_explorer.php?address=' + $('#addr').val();
 				});
 			});
 		</script>
-		<?php echo $scripttext; ?>
+		<?php echo $view->getScript(); ?>
 	</head>
 	<body>
 		<div id="left">
 			<h1 id="title">
 				<a href="earthbound_rom_explorer.php" id="titlelink">
-					<span id="title1">EARTHBOUND</span><br/><br/>
+					<span id="title1">EARTHBOUND</span><br/>
 					<span id="title2">ROM EXPLORER</span>
 				</a>
 			</h1>
@@ -103,7 +103,7 @@
 			</nav>
 		</div>
 		<div id="middle">
-			<?php echo $maintext; ?>
+			<?php echo $view->getMainText(); ?>
 		</div>
 	</body>
 </html>
