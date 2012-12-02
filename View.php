@@ -50,9 +50,17 @@ class View {
 		}
 	}
 	
-	public function formatASM($asm) {
-		$json = json_encode($asm);
-		$this->script = "<script src=\"65816.js\"></script><script>document.addEventListener('DOMContentLoaded', function() { document.getElementById('middle').innerHTML = '<pre>' + _65816.disassemble($json) + '</pre>'; });</script>";
+	public function formatASM($desc, $asm) {
+		$json_asm = json_encode($asm);
+		$json_labels = json_encode(isset($desc['labels']) ? $desc['labels'] : []);
+		$this->script = "
+			<script src=\"65816.js\"></script>
+			<script>
+				\$(document).ready(function() {
+					\$('#middle').html('<pre>' + _65816.disassemble($json_asm, {$desc['offset']}, $json_labels) + '</pre>');
+				});
+			</script>";
+		$this->maintext = "<h2>{$desc['name']}</h2>";
 	}
 	
 	public function formatData($data) {
