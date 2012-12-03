@@ -12,8 +12,8 @@
 		<link rel="stylesheet" href="normalize.css"/>
 		<style>
 			@font-face {
-				font-family: "Apple Kid";
-				src: local("Apple Kid"), url("apple_kid.ttf");
+				font-family: EBMain;
+				src: local(EBMain), url("EBMain.ttf");
 			}
 			@font-face {
 				font-family: "Saturn Boing";
@@ -32,9 +32,12 @@
 				background-color: #f00;
 				color: #fff;
 				font-family: "Apple Kid", sans-serif;
-				font-size: 16px;
+				font-size: 32px;
 				padding: 16px;
 			}
+				tr {
+					vertical-align: top;
+				}
 				a:link, a:visited, a:hover {
 					color: #fff;
 				}
@@ -50,12 +53,13 @@
 						font-weight: normal;
 						text-align: center;
 						font-size: 44px;
+						text-transform: uppercase;
 					}
 						#titlelink {
 							text-decoration: none;
 						}
 							#title1 {
-								text-shadow: #000 1px 1px, #000 -1px 1px, #000 -1px -1px, #000 1px -1px, #000 0 2px, #000 0 3px, #000 0 4px, #000 0 5px, #000 0 6px, #000 0 7px, #000 0 8px, #000 0 9px, #000 0 10px, #000 0 11px, #000 0 12px, #000 0 13px, #000 0 14px, #000 0 15px, #000 0 16px, #000 0 17px, #000 0 18px, #000 0 19px, #000 0 20px;
+								text-shadow: #000 1px 1px, #000 -1px 1px, #000 -1px -1px, #000 1px -1px, #000 0 2px, #000 0 3px, #000 0 4px, #000 0 5px, #000 0 6px, #000 0 7px, #000 0 8px, #000 0 9px, #000 0 10px, #000 0 11px, #000 0 12px, #000 0 13px, #000 0 14px, #000 0 15px, #000 0 16px, #000 0 17px, #000 0 18px, #000 0 19px, #000 0 20px, #000 0 21px, #000 0 22px;
 								color: #fff;
 							}
 							#title2 {
@@ -64,6 +68,7 @@
 							}
 				#middle {
 					font-family: StatusPlz, monospace;
+					font-size: 16px;
 					padding: 16px;
 					border: 16px ridge #fff;
 					border-radius: 16px;
@@ -73,6 +78,17 @@
 					overflow: auto;
 					width: 768px;
 					height: 672px;
+				}
+				#right {
+					border: 16px ridge #fff;
+					border-radius: 16px;
+					background-color: #000;
+					text-align: left;
+					position: fixed;
+					top: 16px;
+					right: 16px;
+					padding: 16px;
+					display: none;
 				}
 			<?php echo $view->getStyle(); ?>
 		</style>
@@ -90,8 +106,8 @@
 		<div id="left">
 			<h1 id="title">
 				<a href="earthbound_rom_explorer.php" id="titlelink">
-					<span id="title1">EARTHBOUND</span><br/>
-					<span id="title2">ROM EXPLORER</span>
+					<span id="title1">Earthbound</span><br/>
+					<span id="title2">ROM Explorer</span>
 				</a>
 			</h1>
 			<nav>
@@ -104,6 +120,9 @@
 		</div>
 		<div id="middle">
 			<?php echo $view->getMainText(); ?>
+		</div>
+		<div id="right">
+			<?php echo $view->getExtraText(); ?>
 		</div>
 	</body>
 </html>

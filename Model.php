@@ -1,4 +1,8 @@
 <?php
+require_once 'util.php';
+require_once 'ASM.php';
+require_once 'Data.php';
+
 class Model {
 	private $rominfo;
 	private $map;
@@ -17,6 +21,56 @@ class Model {
 		$this->rominfo = $ebyaml[0];
 		$this->map = $ebyaml[1];
 		$this->romfile = $romfile;
+		$replacements = &$this->rominfo['texttables']['standardtext']['replacements'];
+		unset($this->rominfo['texttables']['standardtext']['replacements'][0x00]);
+		unset($this->rominfo['texttables']['standardtext']['replacements'][0x03]);
+		$replacements[0x52] = '"';
+		$replacements[0x52] = '#';
+		$replacements[0x55] = '%';
+		$replacements[0x56] = '&';
+		$replacements[0x5b] = '+';
+		$replacements[0x5f] = '/';
+		$replacements[0x6a] = ':';
+		$replacements[0x6b] = ';';
+		$replacements[0x6c] = '<';
+		$replacements[0x6d] = '=';
+		$replacements[0x6e] = '>';
+		$replacements[0x8b] = 'α';
+		$replacements[0x8c] = 'β';
+		$replacements[0x8d] = 'γ';
+		$replacements[0x8e] = 'Σ';
+		$replacements[0x90] = '`';
+		$replacements[0xab] = '{';
+		$replacements[0xac] = '|';
+		$replacements[0xad] = '}';
+		$replacements[0xae] = '~';
+		$replacements[0xaf] = '◯';
+		$staffreplacements = &$this->rominfo['texttables']['stafftext']['replacements'];
+		unset($this->rominfo['texttables']['stafftext']['replacements'][0x00]);
+		$staffreplacements[0x41] = '!';
+		$staffreplacements[0x43] = '#';
+		$staffreplacements[0x4c] = ',';
+		$staffreplacements[0x4d] = '-';
+		$staffreplacements[0x4e] = '.';
+		$staffreplacements[0x4f] = '/';
+		$staffreplacements[0x58] = 'j';
+		$staffreplacements[0x60] = '0';
+		$staffreplacements[0x61] = '1';
+		$staffreplacements[0x62] = '2';
+		$staffreplacements[0x63] = '3';
+		$staffreplacements[0x64] = '4';
+		$staffreplacements[0x65] = '5';
+		$staffreplacements[0x66] = '6';
+		$staffreplacements[0x67] = '7';
+		$staffreplacements[0x68] = '8';
+		$staffreplacements[0x69] = '9';
+		$staffreplacements[0x6a] = 'q';
+		$staffreplacements[0x7e] = 'z';
+		$staffreplacements[0x80] = '_';
+		$staffreplacements[0xad] = ';';
+		$staffreplacements[0xcc] = '|';
+		$staffreplacements[0xce] = '~';
+		$staffreplacements[0xcf] = '◯';
 	}
 	
 	public function getRomInfo() {
@@ -34,47 +88,61 @@ class Model {
 		fseek($rom, static::snes2file(intval($desc['offset'])));
 		$data = fread($rom, intval($desc['size']));
 		fclose($rom);
-		$type = $desc['type'];
-		if ($type == 'assembly') {
+		$type = isset_or($desc['type']);
+		$name = isset_or($desc['name'], '');
+		$description = isset_or($desc['description'], '');
+		if ($type === 'assembly') {
 			$asm = array_map(function($byte) { return ord($byte); }, str_split($data));
-			return [$desc, $asm];
+			$labels = isset_or($desc['labels'], []);
+			$args = isset_or($desc['arguments'], []);
+			return new ASM($name, $description, $desc['size'], null, $desc['offset'], $asm, $labels, $args);
 		}
-		else if ($type == 'data') {
+		else if ($type === 'data') {
 			$data = array_map(function($byte) { return ord($byte); }, str_split($data));
-			$datasize = count($data);
-			$entriesdesc = $desc['entries'];
-			$entriescount = count($entriesdesc);
-			$entries = [];
-			for ($curByte = 0; $curByte < $datasize;) {
-				$enty = [];
-				foreach ($entriesdesc as $curEntry) {
-					$entrysize = $curEntry['size'];
-					$entryarray = array_slice($data, $curByte, $entrysize);
-					$entrydata = null;
-					$type = $curEntry['type'];
-					for ($i = 0; $i < $entrysize; ++$i) {
-						if ($type == 'standardtext') {
-							$replacements = $this->getRomInfo()['texttables']['standardtext']['replacements'];
-							if ($entryarray[$i] >= 0x20) {
-								$entrydata .= $replacements[$entryarray[$i]];
-							}
-							else {
-								$entrydata .= '['.str_pad(dechex($entryarray[$i]), 2, '0', STR_PAD_LEFT).']';
-							}
+			$size = isset_or($desc['size']);
+			$terminator = isset_or($desc['terminator']);
+			$dataObj = new Data($name, $description, $size, $terminator, $desc['offset']);
+			if (isset($desc['entries'])) {
+				$entries = $desc['entries'];
+				for ($i = 0; $i < $size;) {
+					foreach ($entries as $entry) {
+						$entryname = $entry['name'];
+						$entrydata = [];
+						$entrysize = null;
+						if (isset($entry['size'])) {
+							$entrysize = $entry['size'];
+							$entrydata = array_slice($data, $i, $entrysize);
+						}
+						$entryterm = null;
+						if (isset($entry['terminator'])) {
+							$entryterm = $entry['terminator'];
+							$entrydata = $data;
+						}
+						$entrytype = isset_or($entry['type']);
+						$entryObj = null;
+						if ($entrytype === 'standardtext') {
+							$entryObj = new StandardTextEntry($entryname, $entrysize, $entryterm, $entrydata, $this->rominfo['texttables']['standardtext']);
+						}
+						else if ($entrytype === 'stafftext') {
+							$entryObj = new StaffTextEntry($entryname, $entrysize, $entryterm, $entrydata, $this->rominfo['texttables']['stafftext']);
+						}
+						else if ($entrytype === 'pointer') {
+							$entryObj = new PointerEntry($entryname, $entrysize, $entryterm, $entrydata);
 						}
 						else {
-							$entrydata += $entryarray[$i] << ($i * 8);
+							$entryObj = new DataEntry($entryname, $entrysize, $entryterm, $entrydata);
 						}
+						$dataObj->addEntry($entryObj);
+						if ($entrysize === null) $entrysize = count($entryObj->getData());
+						$i += $entrysize;
 					}
-					if ($type == 'pointer') {
-						$entrydata = '$'.str_pad(dechex($entrydata), 6, '0', STR_PAD_LEFT);
-					}
-					$entry[$curEntry['name']] = $entrydata;
-					$curByte += $entrysize;
 				}
-				array_push($entries, $entry);
 			}
-			return [$desc, $entries];
+			else {
+				$dataEntry = new DataEntry('Data', $desc['size'], null, $data);
+				$dataObj.addEntry($dataEntry);
+			}
+			return $dataObj;
 		}
 	}
 	

@@ -13,12 +13,12 @@ class Controller {
 	
 	public function invoke() {
 		if (isset($_GET['name']) || isset($_GET['address'])) {
-			list($desc, $data) = isset($_GET['name']) ? $this->model->getFromName($_GET['name']) : $this->model->getFromAddress($_GET['address']);
-			$type = $desc['type'];
-			if ($type == 'assembly') {
-				$this->view->formatASM($desc, $data);
+			$data = isset($_GET['name']) ? $this->model->getFromName($_GET['name']) : $this->model->getFromAddress($_GET['address']);
+			$type = get_class($data);
+			if ($type === 'ASM') {
+				$this->view->formatASM($data);
 			}
-			else if ($type == 'data') {
+			else if ($type === 'Data') {
 				$this->view->formatData($data);
 			}
 		}
