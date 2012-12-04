@@ -6,8 +6,8 @@ class ASM extends AbstractData {
 	private $arguments;
 	private $hex;
 	
-	public function __construct($name, $description, $size, $terminator, $address, $hex, $labels, $arguments) {
-		parent::__construct($name, $description, $size, $terminator, $address);
+	public function __construct($name, $description, $size, $address, $hex, $labels, $arguments) {
+		parent::__construct($name, $description, $size, null, $address);
 		$this->hex = $hex;
 		$this->labels = $labels;
 		$this->arguments = $arguments;

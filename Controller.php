@@ -6,8 +6,8 @@ class Controller {
 	private $model;
 	private $view;
 	
-	public function __construct($yamlfile, $romfile) {
-		$this->model = new Model($yamlfile, $romfile);
+	public function __construct() {
+		$this->model = new Model('eb.yml', 'earthbound.smc');
 		$this->view = new View();
 	}
 	

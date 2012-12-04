@@ -71,6 +71,8 @@ class Model {
 		$staffreplacements[0xcc] = '|';
 		$staffreplacements[0xce] = '~';
 		$staffreplacements[0xcf] = '◯';
+		StandardTextEntry::$textTable = $this->rominfo['texttables']['standardtext'];
+		StaffTextEntry::$textTable = $this->rominfo['texttables']['stafftext'];
 	}
 	
 	public function getRomInfo() {
@@ -88,16 +90,16 @@ class Model {
 		fseek($rom, static::snes2file(intval($desc['offset'])));
 		$data = fread($rom, intval($desc['size']));
 		fclose($rom);
-		$type = isset_or($desc['type']);
 		$name = isset_or($desc['name'], '');
 		$description = isset_or($desc['description'], '');
-		if ($type === 'assembly') {
+		switch ($desc['type']) {
+		case 'assembly':
 			$asm = array_map(function($byte) { return ord($byte); }, str_split($data));
 			$labels = isset_or($desc['labels'], []);
 			$args = isset_or($desc['arguments'], []);
-			return new ASM($name, $description, $desc['size'], null, $desc['offset'], $asm, $labels, $args);
-		}
-		else if ($type === 'data') {
+			return new ASM($name, $description, $desc['size'], $desc['offset'], $asm, $labels, $args);
+			break;
+		case 'data':
 			$data = array_map(function($byte) { return ord($byte); }, str_split($data));
 			$size = isset_or($desc['size']);
 			$terminator = isset_or($desc['terminator']);
@@ -120,16 +122,46 @@ class Model {
 						}
 						$entrytype = isset_or($entry['type']);
 						$entryObj = null;
-						if ($entrytype === 'standardtext') {
-							$entryObj = new StandardTextEntry($entryname, $entrysize, $entryterm, $entrydata, $this->rominfo['texttables']['standardtext']);
-						}
-						else if ($entrytype === 'stafftext') {
-							$entryObj = new StaffTextEntry($entryname, $entrysize, $entryterm, $entrydata, $this->rominfo['texttables']['stafftext']);
-						}
-						else if ($entrytype === 'pointer') {
-							$entryObj = new PointerEntry($entryname, $entrysize, $entryterm, $entrydata);
-						}
-						else {
+						switch ($entrytype) {
+						case 'standardtext':
+							$entryObj = new StandardTextEntry($entryname, $entrysize, $entryterm, $entrydata);
+							break;
+						case 'stafftext':
+							$entryObj = new StaffTextEntry($entryname, $entrysize, $entryterm, $entrydata);
+							break;
+						case 'pointer':
+							$entryObj = new PointerEntry($entryname, $entrysize, $entrydata);
+							break;
+						case 'hexint':
+							$entryObj = new HexIntEntry($entryname, $entrysize, $entrydata);
+							break;
+						case 'int':
+							$entryObj = new IntEntry($entryname, $entrysize, $entrydata);
+							break;
+						case 'bytearray':
+							$entryObj = new ByteArrayEntry($entryname, $entrysize, $entrydata);
+							break;
+						case 'bitfield':
+							$entryObj = new BitFieldEntry($entryname, $entrysize, $entrydata, $entry['bitvalues']);
+							break;
+						case 'tile':
+							if (isset($entry['palette'])) {
+								$paladdress = $entry['palette'];
+								$offset = 0;
+								while (!isset($this->map[$paladdress])) {
+									$paladdress -= $entrysize;
+									++$offset;
+								}
+								$entryObj = new TileEntry($entryname, $entrysize, $entrydata, $entry['bpp'], $this->getFromAddress(hexbyte($paladdress, 6))->getEntries()[$offset]);
+							}
+							else {
+								$entryObj = new TileEntry($entryname, $entrysize, $entrydata, $entry['bpp']);
+							}
+							break;
+						case 'palette':
+							$entryObj = new PaletteEntry($entryname, $entrysize, $entrydata);
+							break;
+						default:
 							$entryObj = new DataEntry($entryname, $entrysize, $entryterm, $entrydata);
 						}
 						$dataObj->addEntry($entryObj);
@@ -139,10 +171,20 @@ class Model {
 				}
 			}
 			else {
-				$dataEntry = new DataEntry('Data', $desc['size'], null, $data);
-				$dataObj.addEntry($dataEntry);
+				$entrysize = null;
+				if (isset($entry['size'])) {
+					$entrysize = $entry['size'];
+				}
+				$entryterm = null;
+				if (isset($entry['terminator'])) {
+					$entryterm = $entry['terminator'];
+				}
+				$entryObj = new DataEntry('Data', $entrysize, $entryterm, $data);
+				$dataObj->addEntry($entryObj);
 			}
 			return $dataObj;
+		case 'empty':
+			return null;
 		}
 	}
 	

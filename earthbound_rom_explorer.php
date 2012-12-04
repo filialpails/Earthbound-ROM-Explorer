@@ -1,15 +1,15 @@
-<?php
-	require_once 'Controller.php';
-	$controller = new Controller('eb.yml', 'earthbound.smc');
-	$controller->invoke();
-	$view = $controller->getView();
-?>
 <!doctype html>
 <html>
 	<head>
 		<meta charset="utf-8"/>
 		<title>Earthbound ROM Explorer</title>
 		<link rel="stylesheet" href="normalize.css"/>
+		<?php
+			require_once 'Controller.php';
+			$controller = new Controller();
+			$controller->invoke();
+			$view = $controller->getView();
+		?>
 		<style>
 			@font-face {
 				font-family: EBMain;
@@ -33,7 +33,6 @@
 				color: #fff;
 				font-family: "Apple Kid", sans-serif;
 				font-size: 32px;
-				padding: 16px;
 			}
 				tr {
 					vertical-align: top;
@@ -44,9 +43,10 @@
 				#left {
 					text-align: left;
 					position: fixed;
-					top: 16px;
-					left: 16px;
+					top: 0px;
+					left: 0px;
 					padding: 16px;
+					margin: 16px;
 				}
 					#title {
 						font-family: "The Font Against Giygas", sans-serif;
@@ -72,12 +72,12 @@
 					padding: 16px;
 					border: 16px ridge #fff;
 					border-radius: 16px;
-					margin: auto;
+					margin: 16px auto;
 					text-align: left;
 					background-color: #000;
 					overflow: auto;
-					width: 768px;
-					height: 672px;
+					width: calc(768px - 32px - 32px);
+					height: calc(672px - 32px - 32px);
 				}
 				#right {
 					border: 16px ridge #fff;
@@ -85,10 +85,15 @@
 					background-color: #000;
 					text-align: left;
 					position: fixed;
-					top: 16px;
-					right: 16px;
+					top: 0px;
+					right: 0px;
 					padding: 16px;
 					display: none;
+					margin: 16px;
+					width: calc(50% - (768px + 32px + 32px) / 2 - 16px - 16px - 16px);
+				}
+				.error {
+					font-family: "Saturn Boing", sans-serif;
 				}
 			<?php echo $view->getStyle(); ?>
 		</style>
