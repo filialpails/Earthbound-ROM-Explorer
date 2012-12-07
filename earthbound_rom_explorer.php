@@ -34,6 +34,9 @@
 				font-family: "Apple Kid", sans-serif;
 				font-size: 32px;
 			}
+				pre {
+					margin: 0;
+				}
 				tr {
 					vertical-align: top;
 				}
@@ -91,6 +94,7 @@
 					display: none;
 					margin: 16px;
 					width: calc(50% - (768px + 32px + 32px) / 2 - 16px - 16px - 16px);
+					overflow: auto;
 				}
 				.error {
 					font-family: "Saturn Boing", sans-serif;

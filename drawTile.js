@@ -8,7 +8,7 @@ function drawTile(image, element, palette) {
 	for (var y = 0; y < 8; ++y) {
 		for (var x = 0; x < 8; ++x) {
 			var index = (y * 8 + x) * 4;
-			var paletteEntry = image[x][y];
+			var paletteEntry = image[y][x];
 			var grey = palette ? null : paletteEntry * 0x11;
 			data[index++] = palette ? palette[paletteEntry][0] : grey;
 			data[index++] = palette ? palette[paletteEntry][1] : grey;

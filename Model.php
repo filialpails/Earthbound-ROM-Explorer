@@ -22,8 +22,8 @@ class Model {
 		$this->map = $ebyaml[1];
 		$this->romfile = $romfile;
 		$replacements = &$this->rominfo['texttables']['standardtext']['replacements'];
-		unset($this->rominfo['texttables']['standardtext']['replacements'][0x00]);
-		unset($this->rominfo['texttables']['standardtext']['replacements'][0x03]);
+		unset($replacements[0x00]);
+		unset($replacements[0x03]);
 		$replacements[0x52] = '"';
 		$replacements[0x52] = '#';
 		$replacements[0x55] = '%';
@@ -46,7 +46,7 @@ class Model {
 		$replacements[0xae] = '~';
 		$replacements[0xaf] = '◯';
 		$staffreplacements = &$this->rominfo['texttables']['stafftext']['replacements'];
-		unset($this->rominfo['texttables']['stafftext']['replacements'][0x00]);
+		unset($staffreplacements[0x00]);
 		$staffreplacements[0x41] = '!';
 		$staffreplacements[0x43] = '#';
 		$staffreplacements[0x4c] = ',';
@@ -73,6 +73,15 @@ class Model {
 		$staffreplacements[0xcf] = '◯';
 		StandardTextEntry::$textTable = $this->rominfo['texttables']['standardtext'];
 		StaffTextEntry::$textTable = $this->rominfo['texttables']['stafftext'];
+		$ntdarr = &$this->map['NINTENDO_ARRANGEMENT'];
+		$ntdarr['compressed'] = true;
+		$ntdarr['entries'] = array([ 'name' => 'Arrangement', 'size' => 512 ]);
+		$ntdgrf = &$this->map['NINTENDO_GRAPHICS'];
+		$ntdgrf['compressed'] = true;
+		$ntdgrf['entries'] = array([ 'name' => 'Tile', 'type' => 'tile', 'size' => 32, 'bpp' => 2, 'palette' => 0xe1558f ]);
+		$ntdpal = &$this->map['NINTENDO_PALETTE'];
+		$ntdpal['compressed'] = true;
+		$ntdpal['entries'] = array([ 'name' => 'Palette', 'type' => 'palette', 'size' => 8]);
 	}
 	
 	public function getRomInfo() {
@@ -88,7 +97,8 @@ class Model {
 		$desc = $this->map[hexdec($address)];
 		$rom = fopen($this->romfile, 'rb');
 		fseek($rom, static::snes2file(intval($desc['offset'])));
-		$data = fread($rom, intval($desc['size']));
+		$size = intval($desc['size']);
+		$data = fread($rom, $size);
 		fclose($rom);
 		$name = isset_or($desc['name'], '');
 		$description = isset_or($desc['description'], '');
@@ -97,13 +107,20 @@ class Model {
 			$asm = array_map(function($byte) { return ord($byte); }, str_split($data));
 			$labels = isset_or($desc['labels'], []);
 			$args = isset_or($desc['arguments'], []);
-			return new ASM($name, $description, $desc['size'], $desc['offset'], $asm, $labels, $args);
+			$localvars = isset_or($desc['localvars'], []);
+			return new ASM($name, $description, $size, $desc['offset'], $asm, $labels, $args, $localvars);
 			break;
 		case 'data':
 			$data = array_map(function($byte) { return ord($byte); }, str_split($data));
 			$size = isset_or($desc['size']);
 			$terminator = isset_or($desc['terminator']);
 			$dataObj = new Data($name, $description, $size, $terminator, $desc['offset']);
+			if (isset($desc['compressed']) && $desc['compressed'] === true) {
+				$tmp = array_fill(0, 4096, 0);
+				decomp($data, $tmp);
+				$data = $tmp;
+				$size = count($data);
+			}
 			if (isset($desc['entries'])) {
 				$entries = $desc['entries'];
 				for ($i = 0; $i < $size;) {
@@ -130,10 +147,13 @@ class Model {
 							$entryObj = new StaffTextEntry($entryname, $entrysize, $entryterm, $entrydata);
 							break;
 						case 'pointer':
-							$entryObj = new PointerEntry($entryname, $entrysize, $entrydata);
+							$entryObj = new PointerEntry($entryname, $entrysize, array_reverse($entrydata));
+							break;
+						case 'hilomid pointer':
+							$entryObj = new PointerEntry($entryname, $entrysize, [$entrydata[0], $entrydata[2], $entrydata[1]]);
 							break;
 						case 'hexint':
-							$entryObj = new HexIntEntry($entryname, $entrysize, $entrydata);
+							$entryObj = new HexIntEntry($entryname, $entrysize, array_reverse($entrydata));
 							break;
 						case 'int':
 							$entryObj = new IntEntry($entryname, $entrysize, $entrydata);
@@ -148,8 +168,9 @@ class Model {
 							if (isset($entry['palette'])) {
 								$paladdress = $entry['palette'];
 								$offset = 0;
+								$palsize = pow(2, $entry['bpp']) * 2;
 								while (!isset($this->map[$paladdress])) {
-									$paladdress -= $entrysize;
+									$paladdress -= $palsize;
 									++$offset;
 								}
 								$entryObj = new TileEntry($entryname, $entrysize, $entrydata, $entry['bpp'], $this->getFromAddress(hexbyte($paladdress, 6))->getEntries()[$offset]);
@@ -189,15 +210,25 @@ class Model {
 	}
 	
 	public function getRomMap() {
-		return array_filter($this->map, function($element) {
-			return $element['offset'] < 0x7e0000 || $element['offset'] > 0x7fffff;
-		});
+		$ret = [];
+		foreach ($this->map as $key => $value) {
+			$offset = $value['offset'];
+			if (is_string($key) && ($offset < 0x7e0000 || $offset > 0x7fffff)) {
+				$ret[$key] = $value;
+			}
+		}
+		return $ret;
 	}
 	
 	public function getRamMap() {
-		return array_filter($this->map, function($element) {
-			return $element['offset'] >= 0x7e0000 && $element['offset'] <= 0x7fffff;
-		});
+		$ret = [];
+		foreach ($this->map as $key => $value) {
+			$offset = $value['offset'];
+			if (is_string($key) && $offset >= 0x7e0000 && $offset <= 0x7fffff) {
+				$ret[$key] = $value;
+			}
+		}
+		return $ret;
 	}
 }
 ?>

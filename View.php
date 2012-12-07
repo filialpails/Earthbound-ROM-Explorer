@@ -46,17 +46,24 @@ class View {
 			if (isset($item['name'])) {
 				$name = $item['name'];
 				$description = isset_or($item['description'], '');
-				$this->maintext .= "$offset - <span title=\"$description\">$name</span><br/>";
+				$this->maintext .= "$offset - <abbr title=\"$description\">$name</abbr><br/>";
 			}
 		}
 	}
 	
-	public function formatASM(ASM $asm) {
+	public function formatASM(ASM $asm, array $programnames = null, array $datanames = null) {
+		$localvars = $asm->getLocalVars();
 		$json_asm = json_encode($asm->getHex());
 		$json_labels = json_encode($asm->getLabels());
+		$json_prognames = json_encode($programnames);
+		$json_datanames = json_encode($datanames);
+		$json_localvars = json_encode($localvars);
 		$this->script .=
 			"<script src=\"65816.js\"></script>
 			<script>
+				_65816.named_memory_locations['programbank'] = $json_prognames;
+				_65816.named_memory_locations['databank'] = $json_datanames;
+				_65816.named_memory_locations['directpage'] = $json_localvars;
 				\$(document).ready(function() {
 					\$('#middle').append('<pre>' + _65816.disassemble($json_asm, {$asm->getAddress()}, $json_labels) + '</pre>');
 				});
@@ -66,10 +73,18 @@ class View {
 		$this->extratext .= "<p>{$asm->getDescription()}</p>";
 		$arguments = $asm->getArguments();
 		if (count($arguments)) {
-			$this->extratext .= 'Arguments:<br/>';
-			if (isset($arguments['A'])) $this->extratext .= "A: {$arguments['A']}<br/>";
-			if (isset($arguments['X'])) $this->extratext .= "X: {$arguments['X']}<br/>";
-			if (isset($arguments['Y'])) $this->extratext .= "Y: {$arguments['Y']}<br/>";
+			$this->extratext .= 'Arguments:<table>';
+			foreach ($arguments as $name => $desc) {
+				$this->extratext .= "<tr><td>$name:</td><td>$desc</td></tr>";
+			}
+			$this->extratext .= '</table>';
+		}
+		if (count($localvars)) {
+			$this->extratext .= 'Local variables:<table>';
+			foreach ($localvars as $name => $address) {
+				$this->extratext .= "<tr><td>$address:</td><td>$".hexbyte($name).'</td></tr>';
+			}
+			$this->extratext .= '</table>';
 		}
 	}
 	
@@ -105,6 +120,9 @@ class View {
 				foreach ($colours as $colour) {
 					$this->maintext .= "<div style=\"background-color: rgb({$colour[0]},{$colour[1]},{$colour[2]}); width: 32px; height: 32px; float: left;\"></div>";
 				}
+			}
+			else if (is_subclass_of($entry, 'NumberEntry')) {
+				$this->maintext .= $entry->getNumber();
 			}
 			else {
 				$this->maintext .= $entry->getPrettyData();

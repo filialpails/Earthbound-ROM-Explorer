@@ -1,6 +1,72 @@
 <?php
 require_once 'AbstractData.php';
 
+//from cabbage's tile editor
+function decomp(array $cdata, array &$buffer) {
+	$i = 0;
+	$bpos = 0;
+	$bpos2 = 0;
+	while ($cdata[$i] !== 0xFF) {
+		$cmdtype = $cdata[$i] >> 5;
+        $len = ($cdata[$i] & 0x1F) + 1;
+		if ($cmdtype === 7) {
+			$cmdtype = ($cdata[$i] & 0x1C) >> 2;
+			$len = (($cdata[$i] & 3) << 8) + $cdata[$i + 1] + 1;
+			++$i;
+		}
+		++$i;
+		if ($cmdtype >= 4) {
+			$bpos2 = ($cdata[$i] << 8) + $cdata[$i + 1];
+			$i += 2;
+		}
+		switch ($cmdtype) {
+		case 0: // uncompressed ?
+			array_splice($buffer, $bpos, 0, array_slice($cdata, $i, $len));
+			$bpos += $len;
+			$i += $len;
+			break;
+		case 1: // RLE ?
+			for ($j = $bpos; $j < $bpos + $len; ++$j) {
+				$buffer[$j] = $cdata[$i];
+			}
+			$bpos += $len;
+			++$i;
+			break;
+		case 2:
+			while ($len-- !== 0) {
+				$buffer[$bpos++] = $cdata[$i];
+				$buffer[$bpos++] = $cdata[$i + 1];
+			}
+			$i += 2;
+			break;
+		case 3: // each byte is one more than previous ?
+			$tmp = $cdata[$i++];
+			while ($len-- !== 0) {
+				$buffer[$bpos++] = $tmp++;
+			}
+			break;
+		case 4: // use previous data ?
+			array_splice($buffer, $bpos2, 0, array_slice($buffer, $bpos, $len));
+			$bpos += $len;
+			break;
+		case 5:
+			while ($len-- !== 0) {
+				$tmp = $buffer[$bpos2++];
+				$tmp = (($tmp >> 1) & 0x55) | (($tmp << 1) & 0xAA);
+				$tmp = (($tmp >> 2) & 0x33) | (($tmp << 2) & 0xCC);
+				$tmp = (($tmp >> 4) & 0x0F) | (($tmp << 4) & 0xF0);
+				$buffer[$bpos++] = $tmp;
+			}
+			break;
+		case 6:
+			while ($len-- !== 0) {
+				$buffer[$bpos++] = $buffer[$bpos2--];
+			}
+			break;
+		}
+	}
+}
+
 class DataEntry {
 	private $name;
 	private $size;
@@ -23,28 +89,32 @@ class DataEntry {
 	}
 }
 
-class IntEntry extends DataEntry {
+abstract class NumberEntry extends DataEntry {
+	public abstract function getNumber();
+}
+
+class IntEntry extends NumberEntry {
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
 	}
 	
-	public function getInt() {
+	public function getNumber() {
 		$data = $this->getData();
 		$size = $this->getSize();
 		$ret = 0;
-		for ($i = 0; i < $size; ++$i) {
+		for ($i = 0; $i < $size; ++$i) {
 			$ret += $data[$i] << (8 * ($i + 1));
 		}
 		return $ret;
 	}
 }
 
-class HexIntEntry extends DataEntry {
+class HexIntEntry extends NumberEntry {
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
 	}
 	
-	public function getHex() {
+	public function getNumber() {
 		$data = $this->getData();
 		$ret = '0x';
 		foreach ($data as $byte) {
@@ -73,7 +143,14 @@ class BitfieldEntry extends DataEntry {
 }
 
 class PointerEntry extends HexIntEntry {
-	public function getAddress() { return '$'.$this->getHex(); }
+	public function getAddress() {
+		$data = $this->getData();
+		$ret = '$';
+		foreach ($data as $byte) {
+			$ret .= hexbyte($byte);
+		}
+		return $ret;
+	}
 }
 
 abstract class TextEntry extends DataEntry {
@@ -174,13 +251,16 @@ class PaletteEntry extends DataEntry {
 	private $colours;
 	
 	private static function readColour(array $b, $offset = 0) {
+		if (!isset($b[$offset])) $b[$offset] = 0;
+		if (!isset($b[$offset + 1])) $b[$offset + 1] = 0;
 		$bgrBlock = (($b[$offset] & 0xff) | (($b[$offset + 1] & 0xff) << 8)) & 0x7FFF;
         return [($bgrBlock & 0x1f) * 8, (($bgrBlock >> 5) & 0x1f) * 8, ($bgrBlock >> 10) * 8];
 	}
 	
-	private static function readPalette(array $b, $offset = 0) {
+	private function readPalette(array $b, $offset = 0) {
 		$ret = [];
-		for ($i = 0; $i < 16; ++$i) {
+		$numcolours = $this->getSize() / 2;
+		for ($i = 0; $i < $numcolours; ++$i) {
 			array_push($ret, static::readColour($b, $offset + $i * 2));
 		}
 		return $ret;
@@ -188,7 +268,7 @@ class PaletteEntry extends DataEntry {
 	
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
-		$this->colours = static::readPalette($data);
+		$this->colours = $this->readPalette($data);
 	}
 	
 	public function getColours() { return $this->colours; }
@@ -203,14 +283,14 @@ class TileEntry extends DataEntry {
 		$offset = $off;
 		for ($i = 0; $i < 8; ++$i) {
 			$iy = $i + $y;
+			if (!isset($this->image[$iy])) $this->image[$iy] = [];
 			for ($k = 0; $k < 2; ++$k) {
 				$b = $source[$off++];
 				$kbitOffset = $k + $bitOffset;
 				for ($j = 0; $j < 8; ++$j) {
 					$index = (7 - $j) + $x;
-					if (!isset($this->image[$index])) $this->image[$index] = [];
-					if (!isset($this->image[$index][$iy])) $this->image[$index][$iy] = 0;
-					$this->image[$index][$iy] |= (($b & (1 << $j)) >> $j) << $kbitOffset;
+					if (!isset($this->image[$iy][$index])) $this->image[$iy][$index] = 0;
+					$this->image[$iy][$index] |= (($b & (1 << $j)) >> $j) << $kbitOffset;
 				}
 			}
 		}
@@ -232,6 +312,10 @@ class TileEntry extends DataEntry {
 			break;
 		case 4:
 			$this->read4BPPImage($data, 0, 0, 0);
+			break;
+		case 8:
+			//$this->read8BPPImage($data, 0, 0, 0);
+			break;
 		}
 		$this->palette = $palette;
 	}

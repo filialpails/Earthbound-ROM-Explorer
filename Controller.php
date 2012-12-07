@@ -14,12 +14,27 @@ class Controller {
 	public function invoke() {
 		if (isset($_GET['name']) || isset($_GET['address'])) {
 			$data = isset($_GET['name']) ? $this->model->getFromName($_GET['name']) : $this->model->getFromAddress($_GET['address']);
-			$type = get_class($data);
-			if ($type === 'ASM') {
-				$this->view->formatASM($data);
-			}
-			else if ($type === 'Data') {
+			switch (get_class($data)) {
+			case 'ASM':
+				$prognames = [];
+				$rommap = $this->model->getRomMap();
+				foreach ($rommap as $element) {
+					if (isset($element['name']) && isset($element['type']) && $element['type'] === 'assembly') {
+						$prognames[$element['offset'] & 0xffff] = $element['name'];
+					}
+				}
+				$datanames = [];
+				$rammap = $this->model->getRamMap();
+				foreach ($rammap as $element) {
+					if (isset($element['name'])) {
+						$datanames[$element['offset'] & 0xffff] = $element['name'];
+					}
+				}
+				$this->view->formatASM($data, $prognames, $datanames);
+				break;
+			case 'Data':
 				$this->view->formatData($data);
+				break;
 			}
 		}
 		else if (isset($_GET['rommap'])) {
