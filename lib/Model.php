@@ -1,26 +1,49 @@
 <?php
-require_once 'util.php';
-require_once 'ASM.php';
-require_once 'Data.php';
+require_once './lib/util.php';
+require_once './lib/ASM.php';
+require_once './lib/Data.php';
 
+final class RomType {
+	const NOROM = 0x00;
+	const LOROM = 0x20;
+	const HIROM = 0x21;
+	private function __construct() { }
+}
+
+/**
+ * Abstracts access to the ROM and YAML data.
+ * @author	filialpails
+ */
 class Model {
 	private $rominfo;
 	private $map;
 	private $romfile;
+	private $header;
+	private $romtype = RomType::HIROM;
 	
-	private static function file2snes($offset) {
-		return 0xc00000 + ($offset & 0x3fffff);
-	}
-
-	private static function snes2file($addr) {
-		return $addr & 0x3fffff;
-	}
-	
+	/**
+	 * Constructs a new Model class representing the given YAML and ROM files.
+	 * @param	string	$yamlfile	YAML filename
+	 * @param	string	$romfile	ROM filename
+	 * @author	filialpails
+	 */
 	public function __construct($yamlfile, $romfile) {
+		// Verify this is a correct ROM.
+		switch (filesize($romfile) % (1024 * 1024)) {
+		case 0:
+			$header = false;
+			break;
+		case 512:
+			$header = true;
+			break;
+		default:
+			exit("Rom file not correct size.");
+		}
 		$ebyaml = yaml_parse_file($yamlfile, -1);
 		$this->rominfo = $ebyaml[0];
 		$this->map = $ebyaml[1];
 		$this->romfile = $romfile;
+		// Fix up text tables.
 		$replacements = &$this->rominfo['texttables']['standardtext']['replacements'];
 		unset($replacements[0x00]);
 		unset($replacements[0x03]);
@@ -71,8 +94,9 @@ class Model {
 		$staffreplacements[0xcc] = '|';
 		$staffreplacements[0xce] = '~';
 		$staffreplacements[0xcf] = '◯';
-		StandardTextEntry::$textTable = $this->rominfo['texttables']['standardtext'];
-		StaffTextEntry::$textTable = $this->rominfo['texttables']['stafftext'];
+		StandardTextEntry::setTextTable($this->rominfo['texttables']['standardtext']);
+		StaffTextEntry::setTextTable($this->rominfo['texttables']['stafftext']);
+		// For testing decompression function.
 		$ntdarr = &$this->map['NINTENDO_ARRANGEMENT'];
 		$ntdarr['compressed'] = true;
 		$ntdarr['entries'] = array([ 'name' => 'Arrangement', 'size' => 512 ]);
@@ -82,6 +106,39 @@ class Model {
 		$ntdpal = &$this->map['NINTENDO_PALETTE'];
 		$ntdpal['compressed'] = true;
 		$ntdpal['entries'] = array([ 'name' => 'Palette', 'type' => 'palette', 'size' => 8]);
+	}
+	/**
+	 * Converts file offset to SNES address.
+	 * @author	byuu
+	 * @version	v14
+	 */
+	private function file2snes($offset) {
+		if ($this->header) $offset -= 0x200;
+		switch ($this->romtype) {
+		case RomType::LOROM:
+			return (($offset & 0x7f8000) << 1) + 0x8000 + ($offset & 0x7fff);
+		case RomType::HIROM:
+			return 0xc00000 + ($offset & 0x3fffff);
+		default:
+			return $offset & 0xffffff;
+		}
+	}
+	/**
+	 * Converts SNES address to file offset.
+	 * @author	byuu
+	 * @version	v14
+	 */
+	private function snes2file($addr) {
+		switch ($this->romtype) {
+		case RomType::LOROM:
+			$addr = (($addr & 0x7f0000) >> 1) + ($addr & 0x7fff);
+		case RomType::HIROM:
+			$addr &= 0x3fffff;
+		default:
+			$addr &= 0xffffff;
+		}
+		if ($this->header) $addr += 0x200;
+		return $addr;
 	}
 	
 	public function getRomInfo() {
@@ -96,7 +153,7 @@ class Model {
 	public function getFromAddress($address) {
 		$desc = $this->map[hexdec($address)];
 		$rom = fopen($this->romfile, 'rb');
-		fseek($rom, static::snes2file(intval($desc['offset'])));
+		fseek($rom, $this->snes2file(intval($desc['offset'])));
 		$size = intval($desc['size']);
 		$data = fread($rom, $size);
 		fclose($rom);
@@ -112,7 +169,6 @@ class Model {
 			break;
 		case 'data':
 			$data = array_map(function($byte) { return ord($byte); }, str_split($data));
-			$size = isset_or($desc['size']);
 			$terminator = isset_or($desc['terminator']);
 			$dataObj = new Data($name, $description, $size, $terminator, $desc['offset']);
 			if (isset($desc['compressed']) && $desc['compressed'] === true) {

@@ -1,7 +1,10 @@
 <?php
-require_once 'AbstractData.php';
+require_once './lib/AbstractData.php';
 
-//from cabbage's tile editor
+/**
+ * Decompresses commpressed data.
+ * @author	cabbage
+ */
 function decomp(array $cdata, array &$buffer) {
 	$i = 0;
 	$bpos = 0;
@@ -67,6 +70,10 @@ function decomp(array $cdata, array &$buffer) {
 	}
 }
 
+/**
+ * Represents an entry in a table.
+ * @author	filialpails
+ */
 class DataEntry {
 	private $name;
 	private $size;
@@ -89,10 +96,17 @@ class DataEntry {
 	}
 }
 
+/**
+ * An entry representing a number.
+ */
 abstract class NumberEntry extends DataEntry {
 	public abstract function getNumber();
 }
 
+/**
+ * An entry representing a decimal integer.
+ * @author	filialpails
+ */
 class IntEntry extends NumberEntry {
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
@@ -109,6 +123,10 @@ class IntEntry extends NumberEntry {
 	}
 }
 
+/**
+ * An entry representing a hexidecimal integer.
+ * @author	filialpails
+ */
 class HexIntEntry extends NumberEntry {
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
@@ -141,7 +159,10 @@ class BitfieldEntry extends DataEntry {
 		$this->bitvalues = $bitvalues;
 	}
 }
-
+/**
+ * An entry representing the address of another piece of memory.
+ * @author	filialpails
+ */
 class PointerEntry extends HexIntEntry {
 	public function getAddress() {
 		$data = $this->getData();
@@ -152,22 +173,30 @@ class PointerEntry extends HexIntEntry {
 		return $ret;
 	}
 }
-
+/**
+ * An entry representing a string of characters and control codes.
+ * @author	filialpails
+ */
 abstract class TextEntry extends DataEntry {
-	protected $text = '';
+	protected static $textTable = [];
+	private $text = '';
 	
 	public function __construct($name, $size, $terminator, array $data) {
 		parent::__construct($name, $size, $terminator, $data);
 		$this->text = $this->decode($this->getData(), $terminator);
 	}
-	
+	public static function setTextTable(array $table) {
+		static::$textTable = $table;
+	}
 	protected abstract function decode(array $hex, $terminator);
-	
 	public function getText() { return $this->text; }
 }
-
+/**
+ * A text entry encoded as standard text.
+ * @author	filialpails
+ */
 class StandardTextEntry extends TextEntry {
-	public static $textTable = [];
+	protected static $textTable = [];
 	
 	public function __construct($name, $size, $terminator, array $data) {
 		parent::__construct($name, $size, $terminator, $data);
@@ -211,9 +240,12 @@ class StandardTextEntry extends TextEntry {
 		return $text;
 	}
 }
-
+/**
+ * A text entry encoded as staff (credit sequence) text.
+ * @author	filialpails
+ */
 class StaffTextEntry extends TextEntry {
-	public static $textTable = [];
+	protected static $textTable = [];
 	
 	public function __construct($name, $size, $terminator, array $data) {
 		parent::__construct($name, $size, $terminator, $data);
@@ -246,7 +278,10 @@ class StaffTextEntry extends TextEntry {
 		return $text;
 	}
 }
-
+/**
+ * An entry representing a group of colours.
+ * @author	filialpails
+ */
 class PaletteEntry extends DataEntry {
 	private $colours;
 	
@@ -273,7 +308,10 @@ class PaletteEntry extends DataEntry {
 	
 	public function getColours() { return $this->colours; }
 }
-
+/**
+ * An entry representing a paletted bitmap.
+ * @author	filialpails
+ */
 class TileEntry extends DataEntry {
 	private $bpp;
 	private $image = [];
@@ -325,6 +363,10 @@ class TileEntry extends DataEntry {
 	public function getImage() { return $this->image; }
 }
 
+/**
+ * Represents any kind of data which isn't code.
+ * @author	filialpails
+ */
 class Data extends AbstractData {
 	private $entries = [];
 	

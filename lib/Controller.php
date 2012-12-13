@@ -1,13 +1,16 @@
 <?php
-require_once 'Model.php';
-require_once 'View.php';
+require_once './lib/Model.php';
+require_once './lib/View.php';
 
+/**
+ * @author filialpails
+ */
 class Controller {
 	private $model;
 	private $view;
 	
 	public function __construct() {
-		$this->model = new Model('eb.yml', 'earthbound.smc');
+		$this->model = new Model('eb.yml', 'Earthbound (U) [!].smc');
 		$this->view = new View();
 	}
 	

@@ -1,15 +1,14 @@
 <?php
+/**
+ * @author	filialpails
+ */
 class View {
-	private $maintext;
-	private $style;
-	private $script;
-	private $extratext;
+	private $maintext = '';
+	private $style = '';
+	private $script = '';
+	private $extratext = '';
 	
 	public function __construct() {
-		$this->maintext = '';
-		$this->script = '';
-		$this->style = '';
-		$this->extratext = '';
 	}
 	
 	public function formatRomInfo(array $rominfo) {
@@ -34,7 +33,7 @@ class View {
 			if (isset($item['name'])) {
 				$name = $item['name'];
 				$description = isset_or($item['description'], '');
-				$this->maintext .= "$offset - <a href=\"earthbound_rom_explorer.php?name=$name\" title=\"$description\">$name</a><br/>";
+				$this->maintext .= "$offset - <a href=\"index.php?name=$name\" title=\"$description\">$name</a><br/>";
 			}
 		}
 	}
@@ -59,7 +58,7 @@ class View {
 		$json_datanames = json_encode($datanames);
 		$json_localvars = json_encode($localvars);
 		$this->script .=
-			"<script src=\"65816.js\"></script>
+			"<script src=\"js/65816.js\"></script>
 			<script>
 				_65816.named_memory_locations['programbank'] = $json_prognames;
 				_65816.named_memory_locations['databank'] = $json_datanames;
@@ -108,7 +107,7 @@ class View {
 				$pal = json_encode($entry->getPalette() ? $entry->getPalette()->getColours() : null);
 				$this->maintext .= "<canvas id='{$entry->getName()}$i' width='64' height='64'></canvas>";
 				$this->script .= "
-					<script src=\"drawTile.js\"></script>
+					<script src=\"js/drawTile.js\"></script>
 					<script>
 						\$(document).ready(function() {
 							drawTile($json_image, '{$entry->getName()}$i', $pal);

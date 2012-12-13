@@ -1,4 +1,8 @@
 <?php
+/**
+ * Abstract base class for data pulled from the ROM.
+ * @author	filialpails
+ */
 abstract class AbstractData {
 	private $description;
 	private $name;
@@ -14,24 +18,10 @@ abstract class AbstractData {
 		$this->address = $address;
 	}
 	
-	public function getDescription() {
-		return $this->description;
-	}
-	
-	public function getName() {
-		return $this->name;
-	}
-	
-	public function getSize() {
-		return $this->size;
-	}
-	
-	public function getAddress() {
-		return $this->address;
-	}
-	
-	public function getTerminator() {
-		return $this->terminator;
-	}
+	public function getDescription() { return $this->description; }
+	public function getName() { return $this->name; }
+	public function getSize() { return $this->size; }
+	public function getAddress() { return $this->address; }
+	public function getTerminator() { return $this->terminator; }
 }
 ?>
