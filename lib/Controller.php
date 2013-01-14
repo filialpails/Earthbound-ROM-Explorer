@@ -22,7 +22,7 @@ class Controller {
 				$prognames = [];
 				$rommap = $this->model->getRomMap();
 				foreach ($rommap as $element) {
-					if (isset($element['name']) && isset($element['type']) && $element['type'] === 'assembly') {
+					if (isset($element['name'])) {
 						$prognames[$element['offset'] & 0xffff] = $element['name'];
 					}
 				}
