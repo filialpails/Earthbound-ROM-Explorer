@@ -1,0 +1,5 @@
+h1 RamMap#show
+ul
+  - for entry in @map.entries
+    li
+      a href="/address/0x#{entry.offset.to_s(16).rjust(6, '0')}" = entry.name

@@ -1,0 +1,26 @@
+doctype html
+html
+  head
+    meta charset="utf-8"
+    title = 'Earthbound ROM Explorer - ' << yield(:title)
+    = stylesheet_link_tag    "application", media: "all", "data-turbolinks-track" => true
+    = javascript_include_tag "application", "data-turbolinks-track" => true
+    = csrf_meta_tags
+  body
+    #wrapper
+      #left
+        h1#title
+          a#titleLink
+            span#title1 = 'EarthBound'
+            span#title2 = 'ROM Explorer'
+        nav
+          ul
+            li = link_to 'ROM Info', rom_info_path
+            li = link_to 'ROM Map', rom_map_path
+            li = link_to 'RAM Map', ram_map_path
+            li
+              label for="addr" = 'Go to: $'
+              input#addr type="text" size="6"
+              button#goto = 'Go'
+      #middle = yield
+      #right = yield(:extra)
