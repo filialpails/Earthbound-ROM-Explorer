@@ -3,4 +3,4 @@
 
 require File.expand_path('../config/application', __FILE__)
 
-Gamesite::Application.load_tasks
+EarthBoundROMExplorer::Application.load_tasks
