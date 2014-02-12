@@ -11,16 +11,17 @@ html
       #left
         h1#title
           a#titleLink
-            span#title1 = 'EarthBound'
-            span#title2 = 'ROM Explorer'
+            span#title1 EarthBound
+            br
+            span#title2 ROM Explorer
         nav
           ul
             li = link_to 'ROM Info', rom_info_path
             li = link_to 'ROM Map', rom_map_path
             li = link_to 'RAM Map', ram_map_path
             li
-              label for="addr" = 'Go to: $'
-              input#addr type="text" size="6"
-              button#goto = 'Go'
+              label for="address" Go to: $
+              input#address type="text" size="6"
+              button#goto type="button" Go
       #middle = yield
       #right = yield(:extra)

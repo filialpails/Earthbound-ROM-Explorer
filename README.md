@@ -1,9 +1,11 @@
-Earthbound-ROM-Explorer
+EarthBound-ROM-Explorer
 =======================
 
-Requires:
-* A headered or headerless Earthbound ROM (expanded should be okay)
-* PKHackers/EBYAML.git
-* filialpails/65816.js.git
-* necolas/normalize.css.git
+Explore the code and data in the EarthBound SNES ROM.
 
+Requires
+--------
+
+* An EarthBound ROM (headered or headerless, expanded should be okay) in /data
+* eb.yml from [PKHackers/EBYAML.git](http://www.github.com/PKHackers/EBYAML) in /data
+* [filialpails/65816.js.git](http://www.github.com/filialpails/65816.js) for ASM disassembly

@@ -1,5 +1,4 @@
-h1 RamMap#show
+h1 RAM Map
 ul
-  - for entry in @entries
-    li
-      a href="/address/#{entry.offset.to_s(16)}" = entry.name
+  - for entry in @map.entries
+    li = entry.name || entry.offset

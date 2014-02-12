@@ -1,5 +1,7 @@
-h1 RamMap#show
+h1 ROM Map
 ul
   - for entry in @map.entries
-    li
-      a href="/address/0x#{entry.offset.to_s(16).rjust(6, '0')}" = entry.name
+    li = link_to(entry.name || "$#{entry.offset.to_s(16).rjust(6, '0')}",
+      controller: 'address',
+      action: 'show',
+      address: "$#{entry.offset.to_s(16).rjust(6, '0')}")

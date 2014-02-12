@@ -1,2 +1,2 @@
-h1 Address#show
-p Find me in app/views/address/show.html.slim
+h1 #{@entry.name} ($#{@entry.offset.to_s(16).rjust(6, '0')})
+p = @entry.description
