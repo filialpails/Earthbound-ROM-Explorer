@@ -3,6 +3,7 @@ require File.expand_path('../boot', __FILE__)
 require "rails"
 
 %w(
+active_model
 action_controller
 action_view
 sprockets
@@ -15,7 +16,7 @@ end
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.require(:default, Rails.env)
+Bundler.require(*Rails.groups)
 
 module EarthBoundROMExplorer
   class Application < Rails::Application

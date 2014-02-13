@@ -1,4 +1,4 @@
-EarthBoundROMExplorer::Application.routes.draw do
+Rails.application.routes.draw do
   root 'rom_info#show'
   get '/rom_info', to: 'rom_info#show'
   get '/rom_map', to: 'rom_map#show'
