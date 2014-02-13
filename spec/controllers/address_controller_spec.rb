@@ -4,7 +4,7 @@ describe AddressController do
 
   describe "GET 'show'" do
     it "returns http success" do
-      get 'show'
+      get 'show', address: '$c08000'
       expect(response).to be_success
     end
   end
