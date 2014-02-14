@@ -1,7 +1,7 @@
 h1 ROM Map
 ul
   - for entry in @map.entries
-    li = link_to(entry.name || "$#{entry.offset.to_s(16).rjust(6, '0')}",
+    li = link_to(entry.name || "$#{entry.offset.to_hex(3)}",
       controller: 'address',
       action: 'show',
-      address: "$#{entry.offset.to_s(16).rjust(6, '0')}")
+      address: "$#{entry.offset.to_hex(3)}")

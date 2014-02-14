@@ -1,4 +1,4 @@
 h1 RAM Map
 ul
   - for entry in @map.entries
-    li = entry.name || entry.offset
+    li #{entry.name || '$' << entry.offset.to_hex(3)} - #{entry.description}
