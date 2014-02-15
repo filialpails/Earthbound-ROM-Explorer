@@ -1,18 +1,14 @@
-require 'yaml'
+class ROMMap < ApplicationModel
+  self.datastore = EBYAML.map
 
-class ROMMap
   attr_reader :entries
 
-  def initialize
+  def initialize(**attributes)
+    super
     @entries = []
-    # TODO: read rom filename from config file
-    rom_file = ROMFile.new(Rails.root.join('data', 'Earthbound (U) [!].smc'))
-    # TODO: read yaml filename from config file
-    ebyaml = File.open(Rails.root.join('data', 'eb.yml'), 'r') do |file|
-      YAML.load_stream(file.read, file.path)[1]
-    end
-    ebyaml.each do |address, entry|
-      next unless address.instance_of?(Fixnum)
+    rom_file = ROMFile.new
+    EBYAML.map.each do |address, entry|
+      next unless address.is_a?(Fixnum)
       bank = address >> 16
       offset = address & 0x00ffff
       # ignore addresses outside ROM banks

@@ -27,7 +27,7 @@ class TextEntry < ROMEntry
         if cc_lengths[opcode]
           operand_length = cc_lengths[opcode]
         end
-        if operand_length.instance_of?(Array)
+        if operand_length.is_a?(Array)
           if operand_length[@data[i + 1]]
             operand_length = operand_length[@data[i + 1]]
           else

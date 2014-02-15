@@ -1,3 +1,6 @@
-h1 #{@entry.name} ($#{@entry.offset.to_hex(3)})
+- title = "#{@entry.name} ($#{@entry.offset.to_hex(3)})"
+- content_for :title, title
+h1 = title
 p = @entry.description
 p = @entry.data.reduce('') {|memo, byte| memo << "#{byte.to_hex(1)} "}
+p One day this will render as a #{@entry.class.name}

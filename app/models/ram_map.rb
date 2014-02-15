@@ -1,16 +1,12 @@
-require 'yaml'
-
-class RAMMap
+class RAMMap < ApplicationModel
   attr_reader :entries
 
-  def initialize
-    rom_file = ROMFile.new(Rails.root.join('data', 'Earthbound (U) [!].smc'))
-    ebyaml = File.open(Rails.root.join('data', 'eb.yml'), 'r') do |file|
-      YAML.load_stream(file.read, file.path)[1]
-    end
+  def initialize(**attributes)
+    super
+    rom_file = ROMFile.new
     @entries = []
-    ebyaml.each do |address, entry|
-      next unless address.instance_of?(Fixnum) && (address >> 16).between?(0x7e, 0x7f)
+    EBYAML.map.each do |address, entry|
+      next unless address.is_a?(Fixnum) && (address >> 16).between?(0x7e, 0x7f)
       @entries << ROMEntry.new(offset: entry['offset'],
                                size: entry['size'] || 1,
                                name: entry['name'],
