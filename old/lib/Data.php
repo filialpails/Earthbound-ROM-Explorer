@@ -2,75 +2,6 @@
 require_once './lib/AbstractData.php';
 
 /**
- * Decompresses commpressed data.
- * @author	cabbage
- */
-function decomp(array $cdata, array &$buffer) {
-	$i = 0;
-	$bpos = 0;
-	$bpos2 = 0;
-	while ($cdata[$i] !== 0xFF) {
-		$cmdtype = $cdata[$i] >> 5;
-        $len = ($cdata[$i] & 0x1F) + 1;
-		if ($cmdtype === 7) {
-			$cmdtype = ($cdata[$i] & 0x1C) >> 2;
-			$len = (($cdata[$i] & 3) << 8) + $cdata[$i + 1] + 1;
-			++$i;
-		}
-		++$i;
-		if ($cmdtype >= 4) {
-			$bpos2 = ($cdata[$i] << 8) + $cdata[$i + 1];
-			$i += 2;
-		}
-		switch ($cmdtype) {
-		case 0: // uncompressed ?
-			array_splice($buffer, $bpos, 0, array_slice($cdata, $i, $len));
-			$bpos += $len;
-			$i += $len;
-			break;
-		case 1: // RLE ?
-			for ($j = $bpos; $j < $bpos + $len; ++$j) {
-				$buffer[$j] = $cdata[$i];
-			}
-			$bpos += $len;
-			++$i;
-			break;
-		case 2:
-			while ($len-- !== 0) {
-				$buffer[$bpos++] = $cdata[$i];
-				$buffer[$bpos++] = $cdata[$i + 1];
-			}
-			$i += 2;
-			break;
-		case 3: // each byte is one more than previous ?
-			$tmp = $cdata[$i++];
-			while ($len-- !== 0) {
-				$buffer[$bpos++] = $tmp++;
-			}
-			break;
-		case 4: // use previous data ?
-			array_splice($buffer, $bpos2, 0, array_slice($buffer, $bpos, $len));
-			$bpos += $len;
-			break;
-		case 5:
-			while ($len-- !== 0) {
-				$tmp = $buffer[$bpos2++];
-				$tmp = (($tmp >> 1) & 0x55) | (($tmp << 1) & 0xAA);
-				$tmp = (($tmp >> 2) & 0x33) | (($tmp << 2) & 0xCC);
-				$tmp = (($tmp >> 4) & 0x0F) | (($tmp << 4) & 0xF0);
-				$buffer[$bpos++] = $tmp;
-			}
-			break;
-		case 6:
-			while ($len-- !== 0) {
-				$buffer[$bpos++] = $buffer[$bpos2--];
-			}
-			break;
-		}
-	}
-}
-
-/**
  * Represents an entry in a table.
  * @author	filialpails
  */
@@ -79,14 +10,14 @@ class DataEntry {
 	private $size;
 	private $terminator;
 	private $data;
-	
+
 	public function __construct($name, $size, $terminator, array $data) {
 		$this->name = $name;
 		$this->size = $size;
 		$this->terminator = $terminator;
 		$this->data = $data;
 	}
-	
+
 	public function getName() { return $this->name; }
 	public function getSize() { return $this->size; }
 	public function getTerminator() { return $this->terminator; }
@@ -111,7 +42,7 @@ class IntEntry extends NumberEntry {
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
 	}
-	
+
 	public function getNumber() {
 		$data = $this->getData();
 		$size = $this->getSize();
@@ -131,7 +62,7 @@ class HexIntEntry extends NumberEntry {
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
 	}
-	
+
 	public function getNumber() {
 		$data = $this->getData();
 		$ret = '0x';
@@ -144,7 +75,7 @@ class HexIntEntry extends NumberEntry {
 
 class ByteArrayEntry extends DataEntry {
 	//private $arr = [];
-	
+
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
 		//$this->arr = $data;
@@ -153,7 +84,7 @@ class ByteArrayEntry extends DataEntry {
 
 class BitfieldEntry extends DataEntry {
 	private $bitvalues;
-	
+
 	public function __construct($name, $size, array $data, array $bitvalues) {
 		parent::__construct($name, $size, null, $data);
 		$this->bitvalues = $bitvalues;
@@ -180,7 +111,7 @@ class PointerEntry extends HexIntEntry {
 abstract class TextEntry extends DataEntry {
 	protected static $textTable = [];
 	private $text = '';
-	
+
 	public function __construct($name, $size, $terminator, array $data) {
 		parent::__construct($name, $size, $terminator, $data);
 		$this->text = $this->decode($this->getData(), $terminator);
@@ -197,11 +128,11 @@ abstract class TextEntry extends DataEntry {
  */
 class StandardTextEntry extends TextEntry {
 	protected static $textTable = [];
-	
+
 	public function __construct($name, $size, $terminator, array $data) {
 		parent::__construct($name, $size, $terminator, $data);
 	}
-	
+
 	protected function decode(array $hex, $terminator) {
 		$cclengths = static::$textTable['lengths'];
 		$replacements = static::$textTable['replacements'];
@@ -246,11 +177,11 @@ class StandardTextEntry extends TextEntry {
  */
 class StaffTextEntry extends TextEntry {
 	protected static $textTable = [];
-	
+
 	public function __construct($name, $size, $terminator, array $data) {
 		parent::__construct($name, $size, $terminator, $data);
 	}
-	
+
 	protected function decode(array $hex, $terminator) {
 		$cclengths = static::$textTable['lengths'];
 		$replacements = static::$textTable['replacements'];
@@ -284,14 +215,14 @@ class StaffTextEntry extends TextEntry {
  */
 class PaletteEntry extends DataEntry {
 	private $colours;
-	
+
 	private static function readColour(array $b, $offset = 0) {
 		if (!isset($b[$offset])) $b[$offset] = 0;
 		if (!isset($b[$offset + 1])) $b[$offset + 1] = 0;
 		$bgrBlock = (($b[$offset] & 0xff) | (($b[$offset + 1] & 0xff) << 8)) & 0x7FFF;
         return [($bgrBlock & 0x1f) * 8, (($bgrBlock >> 5) & 0x1f) * 8, ($bgrBlock >> 10) * 8];
 	}
-	
+
 	private function readPalette(array $b, $offset = 0) {
 		$ret = [];
 		$numcolours = $this->getSize() / 2;
@@ -300,12 +231,12 @@ class PaletteEntry extends DataEntry {
 		}
 		return $ret;
 	}
-	
+
 	public function __construct($name, $size, array $data) {
 		parent::__construct($name, $size, null, $data);
 		$this->colours = $this->readPalette($data);
 	}
-	
+
 	public function getColours() { return $this->colours; }
 }
 /**
@@ -316,7 +247,7 @@ class TileEntry extends DataEntry {
 	private $bpp;
 	private $image = [];
 	private $palette;
-	
+
 	private function read2BPPImage(array $source, $off, $x, $y, $bitOffset = 0) {
 		$offset = $off;
 		for ($i = 0; $i < 8; ++$i) {
@@ -334,13 +265,13 @@ class TileEntry extends DataEntry {
 		}
 		return $offset - $off;
 	}
-	
+
 	private function read4BPPImage(array $source, $off, $x, $y, $bitOffset = 0) {
 		$this->read2BPPImage($source, $off, $x, $y, $bitOffset);
 		$this->read2BPPImage($source, $off + 16, $x, $y, $bitOffset + 2);
 		return 32;
 	}
-	
+
 	public function __construct($name, $size, array $data, $bpp, PaletteEntry $palette = null) {
 		parent::__construct($name, $size, null, $data);
 		$this->bpp = $bpp;
@@ -357,7 +288,7 @@ class TileEntry extends DataEntry {
 		}
 		$this->palette = $palette;
 	}
-	
+
 	public function getBPP() { return $this->bpp; }
 	public function getPalette() { return $this->palette; }
 	public function getImage() { return $this->image; }
@@ -369,11 +300,11 @@ class TileEntry extends DataEntry {
  */
 class Data extends AbstractData {
 	private $entries = [];
-	
+
 	public function __construct($name, $description, $size, $terminator, $address) {
 		parent::__construct($name, $description, $size, $terminator, $address);
 	}
-	
+
 	public function addEntry(DataEntry $entry) { array_push($this->entries, $entry); }
 	public function getEntries() { return $this->entries; }
 }
