@@ -1,8 +1,11 @@
-- content_for :title, 'ROM Map'
-h1 ROM Map
+- title = 'ROM Map'
+- content_for :title, title
+h1 = title
 ul
   - for entry in @map.entries
-    li = link_to(entry.name || "$#{entry.offset.to_hex(3)}",
+    - addr = '$' << entry.offset.to_hex(3)
+    - name = entry.name
+    li = link_to(name ? "#{addr} #{name}" : addr,
       controller: 'address',
       action: 'show',
-      address: "$#{entry.offset.to_hex(3)}")
+      address: addr)

@@ -2,7 +2,7 @@ doctype html
 html
   head
     meta charset="utf-8"
-    title = 'Earthbound ROM Explorer - ' << yield(:title)
+    title = "Earthbound ROM Explorer - #{yield(:title)}"
     = stylesheet_link_tag    "application", media: "all", "data-turbolinks-track" => true
     = javascript_include_tag "application", "data-turbolinks-track" => true
     = csrf_meta_tags
@@ -23,5 +23,5 @@ html
               label for="address" Go to: $
               input#address type="text" size="6"
               button#goto type="button" Go
-      #middle = yield
-      #right = yield(:extra)
+      #middle.window = yield
+      #right.window = yield(:extra)

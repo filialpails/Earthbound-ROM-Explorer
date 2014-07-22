@@ -1,0 +1,5 @@
+canvas#canvas width="64" height="64"
+- j = ActiveSupport::JSON.encode(subentry)
+javascript:
+  var subentry = #{{j}};
+  drawTile(subentry.image, 'canvas');

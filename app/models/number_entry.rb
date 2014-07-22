@@ -1,6 +1,8 @@
 class NumberEntry < ROMEntry
-  validates :base, presence: true
-  validates :value, absence: true
+  VIEW_NAME = 'number'
+
+  validates! :base, presence: true
+  validates! :value, absence: true
 
   attr_readonly :base, :value
 
@@ -8,7 +10,16 @@ class NumberEntry < ROMEntry
     super
     @value = 0
     @size.times do |i|
-      @value += @data[i] << (8 * (i + 1))
+      @value += @data[i] << (8 * i)
     end
+  end
+
+  def pretty_data
+    case @base
+    when 2 then '0b'
+    when 8 then '0'
+    when 16 then '0x'
+    else ''
+    end << @value.to_s(@base)
   end
 end

@@ -1,0 +1,5 @@
+pre#asm
+- j = ActiveSupport::JSON.encode(entry)
+javascript:
+  var entry = #{{j}};
+  document.getElementById('asm').innerHTML = (new _65816(entry.data, entry.offset, entry.labels)).disassemble();

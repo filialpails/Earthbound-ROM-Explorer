@@ -2,34 +2,42 @@
   font-family: EBMain;
   src: local(EBMain), url("/fonts/EBMain.ttf");
 }
+
 @font-face {
   font-family: "Saturn Boing";
   src: local("Saturn Boing"), url("/fonts/saturn_boing.ttf");
 }
+
 @font-face {
   font-family: StatusPlz;
   src: local(StatusPlz), url("/fonts/statusplz.ttf");
 }
+
 @font-face {
   font-family: "The Font Against Giygas";
   src: local("The Font Against Giygas"), url("/fonts/gasfont.ttf");
 }
+
 body {
   text-align: center;
-  background-color: #f00;
-  color: #fff;
+  background-color: #f80000;
+  color: #f8f8f8;
   font-family: EBMain, sans-serif;
   font-size: 32px;
 }
+
 pre {
   margin: 0;
 }
+
 tr {
   vertical-align: top;
 }
+
 a:link, a:visited, a:hover {
-  color: #fff;
+  color: #f8f8f8;
 }
+
 #left {
   text-align: left;
   position: fixed;
@@ -38,6 +46,7 @@ a:link, a:visited, a:hover {
   padding: 16px;
   margin: 16px;
 }
+
 #title {
   font-family: "The Font Against Giygas", sans-serif;
   font-weight: normal;
@@ -45,9 +54,11 @@ a:link, a:visited, a:hover {
   font-size: 44px;
   text-transform: uppercase;
 }
-#titlelink {
+
+#titleLink {
   text-decoration: none;
 }
+
 #title1 {
   text-shadow: #000 1px 1px, #000 -1px 1px, #000 -1px -1px, #000 1px -1px,
   #000 0 2px, #000 0 3px, #000 0 4px, #000 0 5px, #000 0 6px, #000 0 7px,
@@ -56,37 +67,34 @@ a:link, a:visited, a:hover {
   #000 0 20px, #000 0 21px, #000 0 22px;
   color: #fff;
 }
+
 #title2 {
   text-shadow: #fff 1px 1px, #fff -1px 1px, #fff -1px -1px, #fff 1px -1px;
-  color: #DAA520;
+  color: #d8a820;
 }
+
+.window {
+  background-color: #101010;
+  text-align: left;
+  border-style: solid;
+  border-width: 16px;
+  border-color: transparent;
+  border-image: image-url("window_border.png") 16;
+}
+
 #middle {
   font-family: StatusPlz, monospace;
   font-size: 16px;
   padding: 16px;
-  border: 16px ridge #fff;
-  border-radius: 16px;
   margin: 16px auto;
-  text-align: left;
-  background-color: #000;
-  overflow: auto;
-  width: calc(768px - 32px - 32px);
-  height: calc(672px - 32px - 32px);
+  width: 50%;
 }
+
 #right {
-  border: 16px ridge #fff;
-  border-radius: 16px;
-  background-color: #000;
-  text-align: left;
   position: fixed;
   top: 0px;
   right: 0px;
   padding: 16px;
   display: none;
   margin: 16px;
-  width: calc(50% - (768px + 32px + 32px) / 2 - 16px - 16px - 16px);
-  overflow: auto;
-}
-.error {
-  font-family: "Saturn Boing", sans-serif;
 }

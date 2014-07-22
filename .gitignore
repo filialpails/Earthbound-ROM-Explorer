@@ -12,7 +12,6 @@ capybara-*.html
 **.orig
 rerun.txt
 pickle-email-*.html
-config/secrets.yml
 
 ## Environment normalisation:
 /.bundle
@@ -24,6 +23,6 @@ config/secrets.yml
 # unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
 .rvmrc
 
-*.smc
-*.yml
+/data/*.smc
+/data/*.yml
 *~

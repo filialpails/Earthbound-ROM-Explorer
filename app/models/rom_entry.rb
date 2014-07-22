@@ -22,7 +22,7 @@ class ROMEntry < ApplicationModel
   def initialize(**attributes)
     super
     # if neither size nor terminator given, set size to 1 byte
-    @size ||= 1 unless @terminator
+    @size = 1 unless @size || @terminator
     @compressed ||= false
     if @compreesed
       @compressed_data = @data
@@ -68,7 +68,7 @@ class ROMEntry < ApplicationModel
         while len != 0
           len -= 1
           buffer[bpos] = @data[i]
-          buffer[bpos] = @data[i + 1]
+          buffer[bpos + 1] = @data[i + 1]
           bpos += 2
         end
         i += 2

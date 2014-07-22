@@ -1,3 +1,6 @@
+require 'ebyaml'
+require 'rom_file'
+
 class RAMMap < ApplicationModel
   attr_reader :entries
 

@@ -1,5 +1,12 @@
-- content_for :title, 'RAM Map'
-h1 RAM Map
+- title = 'RAM Map'
+- content_for :title, title
+h1 = title
 ul
   - for entry in @map.entries
-    li #{entry.name || '$' << entry.offset.to_hex(3)} - #{entry.description}
+    - addr = '$' << entry.offset.to_hex(3)
+    - name = entry.name
+    - description = entry.description
+    - label = addr
+    - label += " #{name}" if name
+    - label += " - #{description}" if description
+    li = label

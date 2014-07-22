@@ -1,4 +1,6 @@
 class TextEntry < ROMEntry
+  VIEW_NAME = 'text'
+
   validates :text_table, presence: true
   validates :text, absence: true
 
@@ -6,42 +8,39 @@ class TextEntry < ROMEntry
 
   def initialize(**attributes)
     super
-    @text = ''
-    decode
+    @pc = 0
+    @text = decode
   end
 
   private
 
+  def readPC
+    res = @data[@pc] || 0x69
+    @pc += 1
+    res
+  end
+
   def decode
-    cc_lengths = @text_table.lengths
-    replacements = @text_table.replacements
-    @data.length.times do |i|
-      opcode = @data[i]
-      if [0x15, 0x16, 0x17].include?(opcode)
-        i += 1
-        @text << replacements[opcode][@data[i]]
+    cc_lengths = @text_table['lengths']
+    replacements = @text_table['replacements']
+    text = ''
+    while @pc < @data.length
+      opcode = readPC
+      if (0x15..0x17).include?(opcode)
+        text << replacements[opcode][readPC]
       elsif replacements.has_key?(opcode)
-        @text << replacements[opcode]
-      elsif opcode >= 0x00 && opcode <= 0x1f
-        operand_length = 1
-        if cc_lengths[opcode]
-          operand_length = cc_lengths[opcode]
-        end
-        if operand_length.is_a?(Array)
-          if operand_length[@data[i + 1]]
-            operand_length = operand_length[@data[i + 1]]
-          else
-            operand_length = operand_length['default']
-          end
+        text << replacements[opcode]
+      elsif (0x00..0x1f).include?(opcode)
+        operand_length = cc_lengths[opcode] || 1
+        if operand_length.kind_of?(Hash)
+          operand_length = operand_length[readPC] || operand_length['default']
         end
         operand_length -= 1
         args = ''
-        operand_length.times do |j|
-          i += 1
-          args << ' ' << @data[i].to_hex(6)
-        end
-        @text << "[#{opcode.to_hex(3)}#{args}]"
+        operand_length.times {args << " #{readPC.to_hex(1)}"}
+        text << "[#{opcode.to_hex(1)}#{args}]"
       end
     end
+    text
   end
 end
