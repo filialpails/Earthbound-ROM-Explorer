@@ -1,0 +1,6 @@
+[submodule "data/EBYAML"]
+	path = data/EBYAML
+	url = https://github.com/PKHackers/EBYAML.git
+[submodule "lib/assets/javascripts/65816.js"]
+	path = lib/assets/javascripts/65816.js
+	url = https://github.com/filialpails/65816.js.git

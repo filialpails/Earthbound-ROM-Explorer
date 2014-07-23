@@ -24,5 +24,4 @@ pickle-email-*.html
 .rvmrc
 
 /data/*.smc
-/data/*.yml
 *~
