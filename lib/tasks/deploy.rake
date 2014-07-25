@@ -1,5 +1,5 @@
-# I have a local branch called deploy which is one commit ahead of master
-# that commit is the addition of the ROM file, to keep the ROM off Github
+# I have a local branch called deploy which is one commit ahead of master.
+# That commit is the addition of the ROM file, to keep the ROM off Github.
 desc 'Deploy to heroku'
 task :deploy do
   `git checkout deploy`
