@@ -1,3 +1,7 @@
+$red: #f80000;
+$white: #f8f8f8;
+$black: #101010;
+
 @font-face {
   font-family: EBMain;
   src: local(EBMain), url("/fonts/EBMain.ttf");
@@ -20,14 +24,10 @@
 
 body {
   text-align: center;
-  background-color: #f80000;
-  color: #f8f8f8;
+  background-color: $red;
+  color: $white;
   font-family: EBMain, sans-serif;
   font-size: 32px;
-}
-
-pre {
-  margin: 0;
 }
 
 tr {
@@ -35,7 +35,7 @@ tr {
 }
 
 a:link, a:visited, a:hover {
-  color: #f8f8f8;
+  color: $white;
 }
 
 #left {
@@ -60,21 +60,27 @@ a:link, a:visited, a:hover {
 }
 
 #title1 {
-  text-shadow: #000 1px 1px, #000 -1px 1px, #000 -1px -1px, #000 1px -1px,
-  #000 0 2px, #000 0 3px, #000 0 4px, #000 0 5px, #000 0 6px, #000 0 7px,
-  #000 0 8px, #000 0 9px, #000 0 10px, #000 0 11px, #000 0 12px, #000 0 13px,
-  #000 0 14px, #000 0 15px, #000 0 16px, #000 0 17px, #000 0 18px, #000 0 19px,
-  #000 0 20px, #000 0 21px, #000 0 22px;
+  text-shadow:
+  $black 1px 1px, $black -1px 1px, $black -1px -1px, $black 1px -1px,
+  $black 0 2px, $black 0 3px, $black 0 4px, $black 0 5px, $black 0 6px,
+  $black 0 7px, $black 0 8px, $black 0 9px, $black 0 10px, $black 0 11px,
+  $black 0 12px, $black 0 13px, $black 0 14px, $black 0 15px, $black 0 16px,
+  $black 0 17px, $black 0 18px, $black 0 19px, $black 0 20px, $black 0 21px,
+  $black 0 22px;
   color: #fff;
 }
 
 #title2 {
-  text-shadow: #fff 1px 1px, #fff -1px 1px, #fff -1px -1px, #fff 1px -1px;
+  text-shadow: $white 1px 1px, $white -1px 1px, $white -1px -1px, $white 1px -1px;
   color: #d8a820;
 }
 
+#address, #goto {
+  color: $black;
+}
+
 .window {
-  background-color: #101010;
+  background-color: $black;
   text-align: left;
   border-style: solid;
   border-width: 16px;
