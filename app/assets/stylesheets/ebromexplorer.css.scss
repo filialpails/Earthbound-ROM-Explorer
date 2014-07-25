@@ -96,6 +96,24 @@ a:link, a:visited, a:hover {
   width: 50%;
 }
 
+table {
+  color: $black;
+
+  > tbody {
+    > tr:nth-child(odd) {
+      background-color: #e0e0e0;
+    }
+
+    > tr:nth-child(even) {
+      background-color: #c0c0c0;
+    }
+
+    > tr > td {
+      padding: 4px;
+    }
+  }
+}
+
 #right {
   position: fixed;
   top: 0px;
