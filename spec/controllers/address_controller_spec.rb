@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe AddressController do
+RSpec.describe AddressController, :type => :controller do
 
   describe "GET 'show'" do
     it "returns http success" do

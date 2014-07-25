@@ -1,5 +1,5 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe "ram_map/show.html.slim" do
+RSpec.describe "ram_map/show.html.slim", :type => :view do
   pending "add some examples to (or delete) #{__FILE__}"
 end

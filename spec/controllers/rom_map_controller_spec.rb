@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe RomMapController do
+RSpec.describe RomMapController, :type => :controller do
 
   describe "GET 'show'" do
     it "returns http success" do
