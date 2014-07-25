@@ -1,0 +1,13 @@
+pre#asm
+- j = ActiveSupport::JSON.encode(assembly_block)
+javascript:
+  var block = #{{j}};
+  document.getElementById('asm').innerHTML = (new _65816(block.data, block.offset, block.labels)).disassemble();
+- unless assembly_block.arguments.empty?
+  - content_for :stylesheet do
+    | #right { display: block; }
+  - content_for :extra do
+    h1 Arguments
+    ul
+      - assembly_block.arguments.each do |reg, desc|
+        li #{reg}: #{desc}

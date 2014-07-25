@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 require 'ebyaml'
 
-class ROMInfo < ApplicationModel
+class ROMInfo
+  include ActiveModel::Model
+
   attr_reader :processor, :platform, :title, :country, :series, :text_tables
 
   def initialize(**attributes)
@@ -11,9 +13,13 @@ class ROMInfo < ApplicationModel
     @title = EBYAML.info['title']
     @country = EBYAML.info['country']
     @series = EBYAML.info['series']
-    @text_tables = EBYAML.info['texttables']
+    text_tables = EBYAML.info['texttables']
+    @text_tables = {
+      standard: text_tables['standardtext'],
+      staff: text_tables['stafftext']
+    }
     # fix up text tables
-    replacements = @text_tables['standardtext']['replacements']
+    replacements = @text_tables[:standard]['replacements']
     replacements.delete(0x00)
     replacements.delete(0x03)
     replacements[0x52] = '"'
@@ -37,7 +43,7 @@ class ROMInfo < ApplicationModel
     replacements[0xad] = '}'
     replacements[0xae] = '~'
     replacements[0xaf] = '◯'
-    staffreplacements = @text_tables['stafftext']['replacements']
+    staffreplacements = @text_tables[:staff]['replacements']
     staffreplacements.delete(0x00)
     staffreplacements[0x41] = '!'
     staffreplacements[0x43] = '#'

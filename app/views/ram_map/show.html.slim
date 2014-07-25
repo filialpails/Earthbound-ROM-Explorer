@@ -2,11 +2,10 @@
 - content_for :title, title
 h1 = title
 ul
-  - for entry in @map.entries
-    - addr = '$' << entry.offset.to_hex(3)
-    - name = entry.name
-    - description = entry.description
-    - label = addr
-    - label += " #{name}" if name
-    - label += " - #{description}" if description
+  - @blocks.each do |block|
+    - name = block.name
+    - description = block.description
+    - label = "$#{block.offset.to_hex(3)}"
+    - label << " #{name}" if name
+    - label << " - #{description}" if description
     li = label

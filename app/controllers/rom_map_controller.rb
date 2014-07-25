@@ -1,5 +1,7 @@
+require 'ebyaml'
+
 class RomMapController < ApplicationController
   def show
-    @map = ROMMap.new
+    @blocks = EBYAML.rom_map
   end
 end

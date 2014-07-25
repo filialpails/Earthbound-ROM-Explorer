@@ -1,14 +1,8 @@
-class TileEntry < ROMEntry
-  class << self
-    attr_reader :view_name
-  end
-
-  VIEW_NAME = 'tile'
-
+class TileEntry < DataEntry
   validates :bpp, presence: true
   validates :image, absence: true
 
-  attr_readonly :image, :bpp, :palette
+  attr_accessor :image, :bpp, :palette
 
   def initialize(**attributes)
     super

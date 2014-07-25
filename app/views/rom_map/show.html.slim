@@ -2,9 +2,9 @@
 - content_for :title, title
 h1 = title
 ul
-  - for entry in @map.entries
-    - addr = '$' << entry.offset.to_hex(3)
-    - name = entry.name
+  -  @blocks.each do |block|
+    - addr = "$#{block.offset.to_hex(3)}"
+    - name = block.name
     li = link_to(name ? "#{addr} #{name}" : addr,
       controller: 'address',
       action: 'show',

@@ -1,9 +1,7 @@
-class PaletteEntry < ROMEntry
-  VIEW_NAME = 'palette'
-
+class PaletteEntry < DataEntry
   validates :colours, absence: true
 
-  attr_readonly :colours
+  attr_accessor :colours
 
   def initialize(**attributes)
     super

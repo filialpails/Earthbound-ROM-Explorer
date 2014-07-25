@@ -1,10 +1,8 @@
-class TextEntry < ROMEntry
-  VIEW_NAME = 'text'
-
+class TextEntry < DataEntry
   validates :text_table, presence: true
   validates :text, absence: true
 
-  attr_readonly :text_table, :text
+  attr_accessor :text_table, :text
 
   def initialize(**attributes)
     super

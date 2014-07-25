@@ -1,3 +1,1 @@
-class UnknownEntry < ROMEntry
-  VIEW_NAME = 'unknown'
-end
+class UnknownEntry < DataEntry; end

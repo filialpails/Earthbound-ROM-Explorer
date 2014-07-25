@@ -1,9 +1,11 @@
-class TextTable < ApplicationModel
+class TextTable
+  include ActiveModel::Model
+
   validates :name, presence: true
   validates :lengths, presence: true
   validates :replacements, presence: true
 
-  attr_readonly :name, :lengths, :replacements
+  attr_accessor :name, :lengths, :replacements
 
   def id
     @name

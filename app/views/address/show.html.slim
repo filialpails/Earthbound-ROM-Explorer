@@ -1,27 +1,5 @@
-- title = "#{@entry.name} ($#{@entry.offset.to_hex(3)})"
+- title = "#{@block.name} ($#{@block.offset.to_hex(3)})"
 - content_for :title, title
 h1 = title
-p = @entry.description
-- case @entry
-- when DataEntry
-  - if @entry.entries.empty?
-    ' Raw:
-    = @entry.data.map {|byte| byte.to_hex(1)}.join(' ')
-  - @entry.entries.each do |subentry|
-    h2 = subentry.name
-    p
-      ' Raw:
-      = subentry.data.map {|byte| byte.to_hex(1)}.join(' ')
-    - unless subentry.kind_of?(UnknownEntry)
-      p
-        ' Pretty:
-        = render subentry.class::VIEW_NAME, subentry: subentry
-- when AssemblyEntry
-  = render 'assembly', entry: @entry
-  - unless @entry.arguments.empty?
-    - content_for :extra do
-      = 'Arguments:'
-      br
-      - @entry.arguments.each do |(reg, desc)|
-        = "#{reg}: #{desc}"
-        br
+p = @block.description
+= render @block

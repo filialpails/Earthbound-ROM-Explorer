@@ -1,0 +1,1 @@
+class EmptyBlock < Block; end

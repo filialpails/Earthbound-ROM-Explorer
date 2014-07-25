@@ -1,10 +1,8 @@
-class NumberEntry < ROMEntry
-  VIEW_NAME = 'number'
-
+class NumberEntry < DataEntry
   validates! :base, presence: true
   validates! :value, absence: true
 
-  attr_readonly :base, :value
+  attr_accessor :base, :value
 
   def initialize(**attributes)
     super
