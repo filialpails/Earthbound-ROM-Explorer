@@ -1,7 +1,7 @@
 require 'ebyaml'
 
 class RamMapController < ApplicationController
-  def show
+  def index
     @blocks = EBYAML.ram_map
   end
 end

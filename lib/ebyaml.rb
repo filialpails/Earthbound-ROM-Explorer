@@ -1,4 +1,5 @@
 require 'yaml'
+require_relative 'memoizable'
 require_relative 'rom_file'
 
 module EBYAML
@@ -6,43 +7,75 @@ module EBYAML
     YAML.load_stream(file.read, file.path)
   end
 
-  def self.info
-    @yaml[0]
-  end
-
-  def self.rom_map
-    @yaml[1].values.select {|block|
-      bank = (block['offset'] >> 16) & 0xff
-      page = (block['offset'] >> 8) & 0xff
-      (((0x00...0x40).include?(bank) || (0x80...0xc0).include?(bank)) &&
-       (0x80..0xff).include?(page)) ||
-      ((0x40...0x70).include?(bank) && (0x00...0x80).include?(page)) ||
-      (0xc0..0xff).include?(bank)
-    }.map {|block|
-      parse_block_no_data(block)
-    }
-  end
-
-  def self.ram_map
-    @yaml[1].values.select {|block|
-      bank = (block['offset'] >> 16) & 0xff
-      page = (block['offset'] >> 8) & 0xff
-      (((0x00...0x40).include?(bank) || (0x80...0xc0).include?(bank)) &&
-       (0x00...0x20).include?(page)) ||
-      ((0x30...0x40).include?(bank) && (0x60...0x80).include?(page)) ||
-      (0x70...0x78).include?(bank) ||
-      (0x7e...0x80).include?(bank)
-    }.map {|block|
-      parse_block_no_data(block)
-    }
-  end
-
-  def self.[](id)
-    parse_block(@yaml[1][id])
-  end
-
   class << self
+    include Memoizable
+
+    def info
+      @yaml[0]
+    end
+    memoize :info
+
+    def rom_map
+      _rom_map.map {|(_, block)| parse_block(block, full: false)}
+    end
+    memoize :rom_map
+
+    def ram_map
+      _ram_map.map {|(_, block)| parse_block(block, full: false)}
+    end
+    memoize :ram_map
+
+    def [](id)
+      parse_block(@yaml[1][id])
+    end
+    memoize :[]
+
+    def rom_block_names
+      rom_map.select {|block|
+        !block.name.nil?
+      }.map {|block|
+        [block.offset, block.name]
+      }.to_h
+    end
+    memoize :rom_block_names
+
+    def ram_block_names
+      ram_map.select {|block|
+        !block.name.nil?
+      }.map {|block|
+        [block.offset, block.name]
+      }.to_h
+    end
+    memoize :ram_block_names
+
     private
+
+    def _rom_map
+      @yaml[1].select do |_, block|
+        offset = block['offset']
+        bank = (offset >> 16) & 0xff
+        page = (offset >> 8) & 0xff
+        (((0x00...0x40).include?(bank) || (0x80...0xc0).include?(bank)) &&
+         (0x80..0xff).include?(page)) ||
+        ((0x40...0x70).include?(bank) && (0x00...0x80).include?(page)) ||
+        (0xc0..0xff).include?(bank)
+      end
+    end
+    memoize :_rom_map
+
+    def _ram_map
+      @yaml[1].select do |_, block|
+        offset = block['offset']
+        bank = (offset >> 16) & 0xff
+        page = (offset >> 8) & 0xff
+        (((0x00...0x40).include?(bank) || (0x80...0xc0).include?(bank)) &&
+         (0x00...0x20).include?(page)) ||
+        ((0x30...0x40).include?(bank) && (0x60...0x80).include?(page)) ||
+        (0x70...0x78).include?(bank) ||
+        (0x7e...0x80).include?(bank)
+      end
+    end
+    memoize :_ram_map
 
     # Decompresses commpressed data.
     # @author cabbage
@@ -115,20 +148,15 @@ module EBYAML
       buffer
     end
 
-    def parse_block_no_data(block)
-      Block.new(offset: block['offset'],
-                name: block['name'],
-                description: block['description'])
-    end
-
-    def parse_block(block)
-      rom_file = ROMFile.new
+    def parse_block(block, full: true)
       offset = block['offset']
       attributes = {
         offset: offset,
         name: block['name'],
         description: block['description']
       }
+      return Block.new(**attributes) unless full
+      rom_file = ROMFile.new
       if block.has_key?('terminator')
         terminator = block['terminator']
         attributes[:terminator] = terminator
@@ -143,21 +171,22 @@ module EBYAML
       case block['type']
       when 'data'
         klass = DataBlock
+        attributes[:entries] = []
         if block.has_key?('entries')
           entry_offset = offset
-          attributes[:entries] = []
           i = 0
           while i < size
             attributes[:entries].concat(block['entries'].map {|entry|
-                                          entry = parse_entry(rom_file, block, entry, entry_offset)
+                                          entry = parse_entry(rom_file,
+                                                              block,
+                                                              entry,
+                                                              entry_offset)
                                           entry_size = entry.data.length
                                           i += entry_size
                                           entry_offset += entry_size
                                           entry
                                         })
           end
-        else
-          attributes[:entries] = []
         end
       when 'assembly'
         klass = AssemblyBlock
@@ -182,7 +211,7 @@ module EBYAML
         num_bytes = ROMInfo.new.text_tables[:standard]['lengths'][opcode] || 1
         if num_bytes.kind_of?(Hash)
           first_arg = read_pc.()
-          num_bytes = (num_bytes[first_arg] || num_bytes['default']) - 1
+          num_bytes = (num_bytes[first_arg] || num_bytes['default'])
         end
         pc += num_bytes - 1
       end
@@ -207,11 +236,11 @@ module EBYAML
         # TODO: handle 'size: Size-4', etc.
         if size.kind_of?(String) && size =~ /([-a-zA-Z0-9_ ])+ *([-+])(?: )*([1-9][0-9]*)/
           size = 1
-        #  size_entry_data = block.entries.find {|entry| entry.name == $1}.data
-        #  size = case $2
-        #         when '-' then size_entry_data - $3.to_i
-        #         when '+' then size_entry_data + $3.to_i
-        #         end
+          #  size_entry_data = block.entries.find {|entry| entry.name == $1}.data
+          #  size = case $2
+          #         when '-' then size_entry_data - $3.to_i
+          #         when '+' then size_entry_data + $3.to_i
+          #         end
         end
         attributes[:size] = size
         data = rom_file.read(offset, size)
@@ -246,7 +275,8 @@ module EBYAML
       when 'tile'
         klass = TileEntry
         attributes[:bpp] = entry['bpp']
-        attributes[:palette] = Block.find(entry['palette'])
+        #palette_addr = entry['palette']
+        #attributes[:palette] = PaletteEntry.new(offset: palette_addr) if palette_addr
       when 'palette'
         klass = PaletteEntry
       else

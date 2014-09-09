@@ -1,5 +1,5 @@
 class PaletteEntry < DataEntry
-  validates :colours, absence: true
+  validates! :colours, absence: true
 
   attr_accessor :colours
 
@@ -10,8 +10,8 @@ class PaletteEntry < DataEntry
 
   private
 
-  def read_colour(offset)
-    bgr = (@data[offset] << 8) | @data[offset + 1]
+  def read_colour(i)
+    bgr = (@data[i * 2] << 8) | @data[i * 2 + 1]
     r = (bgr & 0x1f) << 3
     g = ((bgr >> 5) & 0x1f) << 3
     b = ((bgr >> 10) & 0x1f) << 3
@@ -21,7 +21,7 @@ class PaletteEntry < DataEntry
   def read_palette
     num_colours = @size / 2
     (0...num_colours).map do |i|
-      read_colour(i * 2)
+      read_colour(i)
     end
   end
 end

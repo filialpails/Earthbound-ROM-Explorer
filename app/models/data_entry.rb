@@ -12,7 +12,7 @@ class DataEntry
     less_than_or_equal_to:    0xff
   }
   validates :compressed, inclusion: { in: [true, false] }
-  validates :data, presence: true, length: { minimum: 1 }
+  validates! :data, presence: true, length: { minimum: 1 }
 
   attr_accessor :size, :terminator, :name, :compressed, :data
 end

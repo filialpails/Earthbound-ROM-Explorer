@@ -1,5 +1,5 @@
 class RomInfoController < ApplicationController
-  def show
+  def index
     @info = ROMInfo.new
   end
 end

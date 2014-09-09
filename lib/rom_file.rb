@@ -26,11 +26,13 @@ class ROMFile
     when 512 then @header = true
     else fail 'Invalid ROM file: not a valid size'
     end
-    if read_u16(HEADER_OFFSET_LOROM + HEADER_FIELDS[:complement]) |
-        read_u16(HEADER_OFFSET_LOROM + HEADER_FIELDS[:checksum]) == 0xffff
+    complement_offset = HEADER_FIELDS[:complement]
+    checksum_offset = HEADER_FIELDS[:checksum]
+    if read_u16(HEADER_OFFSET_LOROM + complement_offset) |
+        read_u16(HEADER_OFFSET_LOROM + checksum_offset) == 0xffff
       @layout = :LoROM
-    elsif read_u16(HEADER_OFFSET_HIROM + HEADER_FIELDS[:complement]) |
-        read_u16(HEADER_OFFSET_HIROM + HEADER_FIELDS[:checksum]) == 0xffff
+    elsif read_u16(HEADER_OFFSET_HIROM + complement_offset) |
+        read_u16(HEADER_OFFSET_HIROM + checksum_offset) == 0xffff
       @layout = :HiROM
     else
       fail 'Invalid ROM file: neither HiROM nor LoROM detected'
@@ -104,12 +106,12 @@ class ROMFile
   # @author  byuu
   # @version 14
   def snes2file(addr)
-    addr = case @layout
-           when :LoROM then ((addr & 0x7f0000) >> 1) + (addr & 0x007fff)
-           when :HiROM then addr & 0x3fffff
-           else addr & 0xffffff
-           end
-    addr += 0x000200 if @header
-    addr
+    offset = case @layout
+             when :LoROM then ((addr & 0x7f0000) >> 1) + (addr & 0x007fff)
+             when :HiROM then addr & 0x3fffff
+             else addr & 0xffffff
+             end
+    offset += 0x000200 if @header
+    offset
   end
 end

@@ -1,6 +1,6 @@
 class TileEntry < DataEntry
-  validates :bpp, presence: true
-  validates :image, absence: true
+  validates! :bpp, presence: true, inclusion: [2, 4]
+  validates! :image, absence: true
 
   attr_accessor :image, :bpp, :palette
 

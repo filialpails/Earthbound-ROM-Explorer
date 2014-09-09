@@ -1,4 +1,6 @@
 class BitfieldEntry < DataEntry
+  validates! :bitvalues, presence: true, length: { minimum: 1 }
+
   attr_accessor :bitvalues
 
   def pretty

@@ -1,9 +1,7 @@
-require 'ebyaml'
-
 class Block
   include ActiveModel::Model
 
-  validates :offset, presence: true, numericality: {
+  validates! :offset, presence: true, numericality: {
     only_integer: true,
     greater_than_or_equal_to: 0x000000,
     less_than_or_equal_to:    0xffffff
@@ -19,7 +17,7 @@ class Block
     less_than_or_equal_to:    0xff
   }
   validates :compressed, inclusion: { in: [true, false] }
-  validates :data, presence: true, length: { minimum: 1 }
+  validates! :data, presence: true, length: { minimum: 1 }
 
   attr_accessor :offset, :size, :terminator, :name, :description, :compressed, :data
 

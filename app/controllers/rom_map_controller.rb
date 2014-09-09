@@ -1,7 +1,7 @@
 require 'ebyaml'
 
 class RomMapController < ApplicationController
-  def show
+  def index
     @blocks = EBYAML.rom_map
   end
 end

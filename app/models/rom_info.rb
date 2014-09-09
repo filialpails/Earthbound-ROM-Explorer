@@ -8,18 +8,18 @@ class ROMInfo
 
   def initialize(**attributes)
     super
-    @processor = EBYAML.info['processor']
-    @platform = EBYAML.info['platform']
-    @title = EBYAML.info['title']
-    @country = EBYAML.info['country']
-    @series = EBYAML.info['series']
-    text_tables = EBYAML.info['texttables']
-    @text_tables = {
-      standard: text_tables['standardtext'],
-      staff: text_tables['stafftext']
-    }
+    info = EBYAML.info
+    @processor = info['processor']
+    @platform = info['platform']
+    @title = info['title']
+    @country = info['country']
+    @series = info['series']
+    text_tables = info['texttables']
+    standard = text_tables['standardtext']
+    staff = text_tables['stafftext']
+
     # fix up text tables
-    replacements = @text_tables[:standard]['replacements']
+    replacements = standard['replacements']
     replacements.delete(0x00)
     replacements.delete(0x03)
     replacements[0x52] = '"'
@@ -43,7 +43,7 @@ class ROMInfo
     replacements[0xad] = '}'
     replacements[0xae] = '~'
     replacements[0xaf] = '◯'
-    staffreplacements = @text_tables[:staff]['replacements']
+    staffreplacements = staff['replacements']
     staffreplacements.delete(0x00)
     staffreplacements[0x41] = '!'
     staffreplacements[0x43] = '#'
@@ -65,9 +65,17 @@ class ROMInfo
     staffreplacements[0x6a] = 'q'
     staffreplacements[0x7e] = 'z'
     staffreplacements[0x80] = '_'
-    staffreplacements[0xad] = ';'
+    staffreplacements[0xad] = '.'
     staffreplacements[0xcc] = '|'
     staffreplacements[0xce] = '~'
     staffreplacements[0xcf] = '◯'
+    @text_tables = {
+      standard: TextTable.new(name: 'standard',
+                              lengths: standard['lengths'],
+                              replacements: replacements),
+      staff: TextTable.new(name: 'staff',
+                           lengths: staff['lengths'],
+                           replacements: staffreplacements)
+    }
   end
 end

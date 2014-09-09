@@ -1,8 +1,8 @@
 class PointerEntry < DataEntry
-  validates :endianness, inclusion: {
+  validates! :endianness, inclusion: {
     in: %i[big little hilomid]
   }
-  validates :base, numericality: {
+  validates! :base, numericality: {
     only_integer: true,
     greater_than_or_equal_to: 0x000000,
     less_than_or_equal_to:    0xffffff
@@ -25,9 +25,12 @@ class PointerEntry < DataEntry
                       end
                     when 3
                       case @endianness
-                      when :big then (@data[0] << 16) | (@data[1] << 8) | @data[2]
-                      when :little then (@data[2] << 16) | (@data[1] << 8) | @data[0]
-                      when :hilomid then (@data[0] << 16) | (@data[2] << 8) | @data[1]
+                      when :big
+                        (@data[0] << 16) | (@data[1] << 8) | @data[2]
+                      when :little
+                        (@data[2] << 16) | (@data[1] << 8) | @data[0]
+                      when :hilomid
+                        (@data[0] << 16) | (@data[2] << 8) | @data[1]
                       end
                     end).to_hex(3)
   end
