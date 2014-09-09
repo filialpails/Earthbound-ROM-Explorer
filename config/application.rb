@@ -1,5 +1,6 @@
 require File.expand_path('../boot', __FILE__)
 
+# Pick the frameworks you want:
 require "active_model/railtie"
 # require "active_record/railtie"
 require "action_controller/railtie"
@@ -25,5 +26,8 @@ module EarthBoundROMExplorer
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     # config.i18n.load_path += Dir[Rails.root.join('my', 'locales', '*.{rb,yml}').to_s]
     # config.i18n.default_locale = :de
+
+    # For not swallow errors in after_commit/after_rollback callbacks.
+    # config.active_record.raise_in_transactional_callbacks = true
   end
 end
