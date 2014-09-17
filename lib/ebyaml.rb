@@ -8,7 +8,7 @@ module EBYAML
   end
 
   class << self
-    include Memoizable
+    extend Memoizable
 
     def info
       @yaml[0]
