@@ -19,5 +19,6 @@ class NumberEntry < DataEntry
     when 2 then '0b' << num.rjust(8 * @size, '0')
     when 16 then '0x' << num.rjust(2 * @size, '0')
     else num
+    end
   end
 end
