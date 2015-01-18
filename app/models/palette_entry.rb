@@ -1,17 +1,19 @@
 class PaletteEntry < DataEntry
-  validates! :colours, absence: true
+  attr_accessor :colors, :data_uri
 
-  attr_accessor :colours
+  validates! :colors, presence: true, length: { minimum: 4 }
+  validates! :data_uri, presence: true, length: { minimum: 23 }
 
-  def initialize(**attributes)
-    super
-    @colours = read_palette
+  after_initialize do
+    @colors = read_palette
+    @data_uri = 'data:image/png;base64,' << Base64.strict_encode64(ChunkyPNG::Image.new(@colors.length, 1, @colors.map {|color| (color << 8) | 0xff}).to_blob(:best_compression))
   end
 
   private
 
-  def read_colour(i)
-    bgr = (@data[i * 2] << 8) | @data[i * 2 + 1]
+  def read_color(i)
+    index = i * 2
+    bgr = (@data[index] << 8) | @data[index + 1]
     r = (bgr & 0x1f) << 3
     g = ((bgr >> 5) & 0x1f) << 3
     b = ((bgr >> 10) & 0x1f) << 3
@@ -19,9 +21,9 @@ class PaletteEntry < DataEntry
   end
 
   def read_palette
-    num_colours = @size / 2
-    (0...num_colours).map do |i|
-      read_colour(i)
+    num_colors = @size / 2
+    (0...num_colors).map do |i|
+      read_color(i)
     end
   end
 end

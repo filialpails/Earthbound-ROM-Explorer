@@ -1,12 +1,13 @@
 class NumberEntry < DataEntry
-  validates! :base, presence: true
-  validates! :value, absence: true
+  attr_accessor :base, :value, :values
 
-  attr_accessor :base, :value
+  validates! :base, :value, presence: true
+  validates! :base,  numericality: { only_integer: true, greater_than: 0 }
+  validates! :value, numericality: { only_integer: true }
 
-  def initialize(**attributes)
-    super
+  after_initialize do
     @base ||= 10
+    @values ||= []
     @value = 0
     @size.times do |i|
       @value += @data[i] << (8 * i)
@@ -14,6 +15,8 @@ class NumberEntry < DataEntry
   end
 
   def pretty
+    value = @values[@value]
+    return value if value
     num = @value.to_s(@base)
     case @base
     when 2 then '0b' << num.rjust(8 * @size, '0')

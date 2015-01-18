@@ -1,8 +1,3 @@
-canvas#canvas width="64" height="64"
-- j = ActiveSupport::JSON.encode(tile_entry)
-javascript:
-  var entry = #{{j}};
-  drawTile(entry.image, 'canvas');
-  if (entry.palette) {
-    // TODO
-  }
+img.tile src=tile_entry.data_uri width="64" height="64"
+- if tile_entry.palette
+  = link_to('Go to palette', tile_entry.palette)

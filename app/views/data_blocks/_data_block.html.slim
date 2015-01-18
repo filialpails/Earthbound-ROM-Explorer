@@ -1,3 +1,6 @@
-- data_block.entries.each do |entry|
-  h2 = entry.name
-  = render entry
+ul
+  - data_block.entries.first(500).each do |entry|
+    li
+      = entry.name
+      ' :
+      = render entry

@@ -6,14 +6,13 @@ module EBYAML
   @yaml = File.open(Rails.configuration.yaml_location, 'r') do |file|
     YAML.load_stream(file.read, file.path)
   end
+  @info = @yaml[0]
+  @map = @yaml[1]
 
   class << self
     extend Memoizable
 
-    def info
-      @yaml[0]
-    end
-    memoize :info
+    attr_reader :info
 
     def rom_map
       _rom_map.map {|(_, block)| parse_block(block, full: false)}
@@ -26,7 +25,7 @@ module EBYAML
     memoize :ram_map
 
     def [](id)
-      parse_block(@yaml[1][id])
+      parse_block(@map[id])
     end
     memoize :[]
 
@@ -51,7 +50,7 @@ module EBYAML
     private
 
     def _rom_map
-      @yaml[1].select do |_, block|
+      @map.select do |_, block|
         offset = block['offset']
         bank = (offset >> 16) & 0xff
         page = (offset >> 8) & 0xff
@@ -64,7 +63,7 @@ module EBYAML
     memoize :_rom_map
 
     def _ram_map
-      @yaml[1].select do |_, block|
+      @map.select do |_, block|
         offset = block['offset']
         bank = (offset >> 16) & 0xff
         page = (offset >> 8) & 0xff
@@ -158,8 +157,7 @@ module EBYAML
       return Block.new(**attributes) unless full
       rom_file = ROMFile.new
       if block.has_key?('terminator')
-        terminator = block['terminator']
-        attributes[:terminator] = terminator
+        terminator = attributes[:terminator] = block['terminator']
         data = rom_file.read_until(offset, terminator)
         size = data.length
       else
@@ -173,17 +171,15 @@ module EBYAML
         klass = DataBlock
         attributes[:entries] = []
         if block.has_key?('entries')
-          entry_offset = offset
           i = 0
           while i < size
             attributes[:entries].concat(block['entries'].map {|entry|
                                           entry = parse_entry(rom_file,
                                                               block,
                                                               entry,
-                                                              entry_offset)
+                                                              offset + i)
                                           entry_size = entry.data.length
                                           i += entry_size
-                                          entry_offset += entry_size
                                           entry
                                         })
           end
@@ -197,20 +193,23 @@ module EBYAML
         klass = EmptyBlock
       else
         klass = Block
+        attributes[:values] = block['values']
       end
-      klass.new(**attributes)
+      obj = klass.new(**attributes)
+      obj.valid?
+      obj
     end
 
     def find_control_code(rom_file, offset, terminator)
-      # FIXME
       pc = 0
-      read_pc = ->{ rom_file.read_u8(offset + pc); pc += 1 }
+      cc_lengths = ROMInfo.new.text_tables[:standard].lengths
       loop do
-        opcode = read_pc.()
+        opcode = rom_file.read_u8(offset + pc)
+        pc += 1
         break if opcode == terminator
-        num_bytes = ROMInfo.new.text_tables[:standard]['lengths'][opcode] || 1
+        num_bytes = cc_lengths[opcode] || 1
         if num_bytes.kind_of?(Hash)
-          first_arg = read_pc.()
+          first_arg = rom_file.read_u8(offset + pc)
           num_bytes = (num_bytes[first_arg] || num_bytes['default'])
         end
         pc += num_bytes - 1
@@ -223,28 +222,24 @@ module EBYAML
         name: entry['name']
       }
       if entry.has_key?('terminator')
-        terminator = entry['terminator']
-        attributes[:terminator] = terminator
+        terminator = attributes[:terminator] = entry['terminator']
         if entry['type'] == 'standardtext'
-          size = find_control_code(rom_file, offset, terminator) + 1
+          size = find_control_code(rom_file, offset, terminator)
           data = rom_file.read(offset, size)
         else
           data = rom_file.read_until(offset, terminator)
+          size = data.size
         end
       else
         size = entry['size'] || 1
-        # TODO: handle 'size: Size-4', etc.
-        if size.kind_of?(String) && size =~ /([-a-zA-Z0-9_ ])+ *([-+])(?: )*([1-9][0-9]*)/
+        # FIXME
+        if size.kind_of?(String) && size == 'Size-4'
+          #size = entries.find {|entry| entry.name == 'Size'}.data - 4
           size = 1
-          #  size_entry_data = block.entries.find {|entry| entry.name == $1}.data
-          #  size = case $2
-          #         when '-' then size_entry_data - $3.to_i
-          #         when '+' then size_entry_data + $3.to_i
-          #         end
         end
-        attributes[:size] = size
         data = rom_file.read(offset, size)
       end
+      attributes[:size] = size
       attributes[:data] = entry['compressed'] ? decomp(data) : data
       case entry['type']
       when 'pointer'
@@ -264,9 +259,11 @@ module EBYAML
       when 'int'
         klass = NumberEntry
         attributes[:base] = 10
+        attributes[:values] = entry['values']
       when 'hexint'
         klass = NumberEntry
         attributes[:base] = 16
+        attributes[:values] = entry['values']
       when 'bytearray'
         klass = ByteArrayEntry
       when 'bitfield'
@@ -275,14 +272,17 @@ module EBYAML
       when 'tile'
         klass = TileEntry
         attributes[:bpp] = entry['bpp']
-        #palette_addr = entry['palette']
-        #attributes[:palette] = PaletteEntry.new(offset: palette_addr) if palette_addr
+        #attributes[:palette] = self[entry['palette']] if entry.has_key?('palette')
       when 'palette'
         klass = PaletteEntry
       else
         klass = UnknownEntry
+        attributes[:values] = entry['values']
+        attributes[:substtable] = self[entry['substtable']] if entry.has_key?('substtable')
       end
-      klass.new(**attributes)
+      obj = klass.new(**attributes)
+      obj.valid?
+      obj
     end
   end
 end

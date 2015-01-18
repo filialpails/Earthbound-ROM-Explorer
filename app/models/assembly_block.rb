@@ -1,8 +1,7 @@
 class AssemblyBlock < Block
   attr_accessor :labels, :arguments, :local_vars
 
-  def initialize(**attributes)
-    super
+  after_initialize do
     @labels ||= {}
     @arguments ||= {}
     @local_vars ||= {}

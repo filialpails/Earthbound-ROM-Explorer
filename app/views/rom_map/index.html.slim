@@ -2,10 +2,9 @@
 - content_for :title, title
 h1 = title
 ul
-  -  @blocks.each do |block|
+  - @blocks.each do |block|
     - addr = "$#{block.offset.to_hex(3)}"
     - name = block.name
     li = link_to(name ? "#{addr} #{name}" : addr,
-      controller: 'address',
-      action: 'show',
-      id: addr)
+                 {controller: 'address', action: 'show', id: addr},
+                 title: block.description)

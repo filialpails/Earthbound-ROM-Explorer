@@ -40,4 +40,4 @@ Rails.application.configure do
   # config.action_view.raise_on_missing_translations = true
 end
 
-Slim::Engine.set_default_options pretty: true, sort_attrs: false
+Slim::Engine.set_options pretty: true, sort_attrs: false, format: :html

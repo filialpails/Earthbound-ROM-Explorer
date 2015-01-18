@@ -43,6 +43,12 @@ a {
   }
 }
 
+#forkme {
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
 #left {
   text-align: left;
   position: fixed;
@@ -118,6 +124,13 @@ tr {
 
 td {
   padding: 4px;
+}
+
+.tile {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -o-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
 }
 
 #right {
