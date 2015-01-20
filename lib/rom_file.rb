@@ -64,7 +64,7 @@ class ROMFile
   # @return [Fixnum] word read from the ROM
   def read_u16(addr)
     @rom.seek(snes2file(addr))
-    @rom.readbyte | (@rom.readbyte << 8)
+    @rom.read(2).unpack('S<').first
   end
 
   # Read a signed byte.
@@ -73,7 +73,7 @@ class ROMFile
   # @return [Fixnum] byte read from the ROM
   def read_s8(addr)
     @rom.seek(snes2file(addr))
-    @rom.read(1).unpack('c')[0]
+    @rom.read(1).unpack('c').first
   end
 
   # Read a signed word (two bytes).
@@ -82,7 +82,7 @@ class ROMFile
   # @return [Fixnum] word read from the ROM
   def read_s16(addr)
     @rom.seek(snes2file(addr))
-    @rom.read(2).unpack('s>')[0]
+    @rom.read(2).unpack('s<').first
   end
 
   # Read bytes until a terminator byte is found. The terminator is included in

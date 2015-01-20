@@ -13,7 +13,7 @@ class PaletteEntry < DataEntry
 
   def read_color(i)
     index = i * 2
-    bgr = (@data[index] << 8) | @data[index + 1]
+    bgr = @data[index, 2].pack('c2').unpack('S<').first
     r = (bgr & 0x1f) << 3
     g = ((bgr >> 5) & 0x1f) << 3
     b = ((bgr >> 10) & 0x1f) << 3

@@ -1,0 +1,6 @@
+ul
+  - data_entry_set.entries.each do |entry|
+    li
+      = entry.name
+      ' :
+      = render entry

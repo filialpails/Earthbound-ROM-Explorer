@@ -50,7 +50,8 @@ module EBYAML
     private
 
     def _rom_map
-      @map.select do |_, block|
+      @map.select do |key, block|
+        next if key.kind_of?(String)
         offset = block['offset']
         bank = (offset >> 16) & 0xff
         page = (offset >> 8) & 0xff
@@ -63,7 +64,8 @@ module EBYAML
     memoize :_rom_map
 
     def _ram_map
-      @map.select do |_, block|
+      @map.select do |key, block|
+        next if key.kind_of?(String)
         offset = block['offset']
         bank = (offset >> 16) & 0xff
         page = (offset >> 8) & 0xff
@@ -169,26 +171,28 @@ module EBYAML
       case block['type']
       when 'data'
         klass = DataBlock
-        attributes[:entries] = []
         if block.has_key?('entries')
           i = 0
+          entry_sets = []
           while i < size
-            attributes[:entries].concat(block['entries'].map {|entry|
-                                          entry = parse_entry(rom_file,
-                                                              block,
-                                                              entry,
-                                                              offset + i)
-                                          entry_size = entry.data.length
-                                          i += entry_size
-                                          entry
-                                        })
+            entry_set = parse_entry_set(rom_file, block, offset + i)
+            i += entry_set.size
+            entry_sets << entry_set
           end
+          attributes[:entry_sets] = entry_sets
         end
       when 'assembly'
         klass = AssemblyBlock
         attributes[:arguments] = block['arguments'] || {}
         attributes[:local_vars] = block['localvars'] || {}
         attributes[:labels] = block['labels'] || {}
+        attributes[:initial_index_size] = block['indexsize'] || 16
+        attributes[:initial_accum_size] = block['accumsize'] || 16
+        final = block['final processor state']
+        if final
+          attributes[:final_index_size] = final['index']
+          attributes[:final_accum_size] = final['accum']
+        end
       when 'empty'
         klass = EmptyBlock
       else
@@ -198,6 +202,20 @@ module EBYAML
       obj = klass.new(**attributes)
       obj.valid?
       obj
+    end
+
+    def parse_entry_set(rom_file, block, offset)
+      entries = block['entries'].map do |entry|
+        entry = parse_entry(rom_file, block, entry, offset)
+        offset += entry.data.size
+        entry
+      end
+      total_size = entries.reduce(0) do |memo, entry|
+        memo + entry.data.size
+      end
+      entry_set = DataEntrySet.new(entries: entries, size: total_size)
+      entry_set.valid?
+      entry_set
     end
 
     def find_control_code(rom_file, offset, terminator)

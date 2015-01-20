@@ -1,7 +1,7 @@
 class DataBlock < Block
-  attr_accessor :entries
+  attr_accessor :entry_sets
 
   after_initialize do
-    @entries ||= []
+    @entry_sets ||= []
   end
 end

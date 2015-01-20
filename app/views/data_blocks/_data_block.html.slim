@@ -1,6 +1,4 @@
 ul
-  - data_block.entries.first(500).each do |entry|
+  - data_block.entry_sets.each do |entry_set|
     li
-      = entry.name
-      ' :
-      = render entry
+      = render entry_set
